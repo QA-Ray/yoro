@@ -600,15 +600,18 @@ def fetch_bandsintown():
 
 
 def fetch_ticketmaster():
-    """Ticketmaster Discovery API — concerts & sports events worldwide.
+    """Ticketmaster Discovery API — fetches all JP events, buckets by segment.
 
-    Uses CONSUMER_KEY env var as the `apikey` query parameter.
-    (CONSUMER_SECRET is for OAuth Partner API, unused here.)
+    Uses CONSUMER_KEY as `apikey`. Free tier: 5000/day, 5/sec.
+    Single call per run, classifies events on our side via segment name
+    (Music / Sports / Arts & Theatre / etc).
 
-    Free tier: 5000 calls/day, 5 calls/sec. We make 2 calls per run
-    (Music + Sports), filtered to JP. Plenty of headroom.
+    Note: Ticketmaster's JP coverage is limited — many domestic Japan
+    events go through PIA/Eplus, not Ticketmaster. Empty result is OK,
+    fail-soft pipeline continues.
     """
     import os
+    import collections
     api_key = os.environ.get("CONSUMER_KEY", "").strip()
     if not api_key:
         print("  [ticketmaster] CONSUMER_KEY not set, skipping",
@@ -616,47 +619,56 @@ def fetch_ticketmaster():
         return []
 
     base = "https://app.ticketmaster.com/discovery/v2/events.json"
-    out = []
-
-    SEGMENTS = [
-        ("Music",  "音楽",   "響"),
-        ("Sports", "スポーツ", "競"),
-    ]
-
-    for segment, cat, kanji in SEGMENTS:
-        params = {
-            "apikey": api_key,
-            "countryCode": "JP",
-            "size": 100,
-            "classificationName": segment,
-            "sort": "date,asc",
-        }
-        try:
-            r = requests.get(
-                base, params=params, timeout=15,
-                headers={"User-Agent": "YoroBot/0.1 (+https://github.com/QA-Ray/yoro)"},
-            )
-            if r.status_code != 200:
-                print(f"  [ticketmaster {segment}] HTTP {r.status_code}",
-                      file=sys.stderr)
-                time.sleep(0.5)
-                continue
-            data = r.json()
-        except Exception as e:
-            print(f"  [ticketmaster {segment}] {type(e).__name__}: {e}",
+    params = {
+        "apikey": api_key,
+        "countryCode": "JP",
+        "size": 200,
+        "sort": "date,asc",
+    }
+    try:
+        r = requests.get(
+            base, params=params, timeout=15,
+            headers={"User-Agent": "YoroBot/0.1 (+https://github.com/QA-Ray/yoro)"},
+        )
+        if r.status_code != 200:
+            print(f"  [ticketmaster] HTTP {r.status_code}: {r.text[:140]}",
                   file=sys.stderr)
-            time.sleep(0.5)
-            continue
+            return []
+        data = r.json()
+    except Exception as e:
+        print(f"  [ticketmaster] {type(e).__name__}: {e}", file=sys.stderr)
+        return []
 
-        events = (data.get("_embedded") or {}).get("events", [])
-        added = 0
-        for ev in events:
-            mapped = parse_ticketmaster_event(ev, cat, kanji)
-            if mapped:
-                out.append(mapped)
-                added += 1
-        print(f"  [ticketmaster {segment}] {added} JP events")
-        time.sleep(0.5)
+    events = (data.get("_embedded") or {}).get("events", []) or []
+    print(f"  [ticketmaster] {len(events)} JP events from API")
+
+    if not events:
+        return []
+
+    SEGMENT_MAP = {
+        "music":              ("音楽", "響"),
+        "sports":             ("スポーツ", "競"),
+        "arts & theatre":     ("音楽", "舞"),
+        "miscellaneous":      ("その他", "事"),
+        "film":               ("アート", "光"),
+    }
+
+    seg_counts = collections.Counter()
+    out = []
+    for ev in events:
+        classifications = ev.get("classifications") or []
+        seg_name = ""
+        if classifications:
+            seg_name = (classifications[0].get("segment") or {}).get("name", "") or ""
+        cat, kanji = SEGMENT_MAP.get(seg_name.lower(), ("音楽", "響"))
+        mapped = parse_ticketmaster_event(ev, cat, kanji)
+        if mapped:
+            out.append(mapped)
+            seg_counts[seg_name or "unknown"] += 1
+
+    if seg_counts:
+        breakdown = ", ".join(f"{s}={n}" for s, n in seg_counts.most_common())
+        print(f"  [ticketmaster] segments: {breakdown}")
 
     return out
 
