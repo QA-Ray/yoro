@@ -60,6 +60,95 @@
   button { font-family: inherit; cursor: pointer; background: none; border: none; color: inherit; padding: 0; }
   ::selection { background: var(--vermillion); color: var(--paper-white); }
 
+  /* ============== Side Section Nav (left edge, sticky) ============== */
+  .side-nav {
+    position: fixed;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 25;
+  }
+  .side-nav[hidden] { display: none; }
+  .side-nav ul {
+    list-style: none;
+    margin: 0; padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .side-nav button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-align: left;
+    transition: all var(--motion-fast);
+    position: relative;
+    width: auto;
+  }
+  .side-nav .indicator {
+    width: 14px;
+    height: 1px;
+    background: var(--ink-faint);
+    flex-shrink: 0;
+    transition: all var(--motion-fast);
+  }
+  .side-nav .num {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-faint);
+    width: 18px;
+    transition: color var(--motion-fast);
+  }
+  .side-nav .kanji {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink-soft);
+    width: 16px;
+    text-align: center;
+    transition: color var(--motion-fast);
+  }
+  .side-nav .label {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: transparent;
+    width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all var(--motion-normal) var(--ease-paper);
+  }
+  .side-nav button:hover .label,
+  .side-nav button.active .label {
+    color: var(--ink);
+    width: auto;
+    max-width: 140px;
+    padding-right: 8px;
+  }
+  .side-nav button:hover .indicator,
+  .side-nav button.active .indicator {
+    background: var(--vermillion);
+    width: 28px;
+  }
+  .side-nav button.active .kanji,
+  .side-nav button.active .num,
+  .side-nav button:hover .kanji,
+  .side-nav button:hover .num {
+    color: var(--vermillion);
+  }
+  @media (max-width: 1280px) {
+    .side-nav { display: none !important; }
+  }
+
   /* ============== Page Spine (right-edge magazine accent) ============== */
   .spine {
     position: fixed;
@@ -1949,6 +2038,10 @@
 </head>
 <body data-tab="events">
 
+<nav class="side-nav" id="sideNav" aria-label="章节导航" hidden>
+  <ul></ul>
+</nav>
+
 <div class="spine">
   <span>YORO</span>
   <span class="dot">·</span>
@@ -2453,6 +2546,7 @@ function render() {
     }).join("") + `</div>`;
   }
   attachCardInteractions();
+  renderSideNav();
 }
 
 /* ========== Editorial section-based layout (events tab) ========== */
@@ -2772,6 +2866,84 @@ function attachCardInteractions() {
     if (card.classList.contains("card")) {
       attachTilt(card);
     }
+  });
+}
+
+/* ========== Side Section Nav ========== */
+let _sideNavObserver = null;
+
+function bindSideNavOnce() {
+  const nav = $("#sideNav");
+  if (!nav || nav.dataset.bound) return;
+  nav.dataset.bound = "1";
+  nav.addEventListener("click", e => {
+    const btn = e.target.closest("button[data-target]");
+    if (!btn) return;
+    const el = document.getElementById(btn.dataset.target);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+function renderSideNav() {
+  const nav = $("#sideNav");
+  if (!nav) return;
+  const list = nav.querySelector("ul");
+
+  if (state.tab !== "events") {
+    nav.hidden = true;
+    if (_sideNavObserver) { _sideNavObserver.disconnect(); _sideNavObserver = null; }
+    return;
+  }
+
+  const sections = $$(".ed-section");
+  if (sections.length === 0) {
+    nav.hidden = true;
+    return;
+  }
+
+  const items = [{ id: "heroStory", kanji: "序", label: "INTRO" }];
+  sections.forEach((section, idx) => {
+    const id = `ed-sec-${idx}`;
+    section.id = id;
+    const cover = section.querySelector(".ed-section-cover");
+    const kanji = (cover?.querySelector(".cover-kanji")?.textContent || "").trim();
+    const enRaw = (cover?.querySelector(".cover-en")?.textContent || "").trim();
+    const enLabel = enRaw.split(" ")[0] || enRaw; // first word, e.g. FEATURED · 04 → FEATURED
+    items.push({ id, kanji, label: enLabel });
+  });
+
+  list.innerHTML = items.map((it, i) => `
+    <li>
+      <button data-target="${it.id}" type="button" aria-label="跳转到 ${it.label}">
+        <span class="indicator"></span>
+        <span class="num">${String(i).padStart(2, "0")}</span>
+        <span class="kanji">${it.kanji}</span>
+        <span class="label">${it.label}</span>
+      </button>
+    </li>
+  `).join("");
+
+  nav.hidden = false;
+  bindSideNavOnce();
+
+  // Track active section via IntersectionObserver
+  if (_sideNavObserver) _sideNavObserver.disconnect();
+  _sideNavObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const id = entry.target.id;
+      $$("#sideNav button").forEach(b => {
+        b.classList.toggle("active", b.dataset.target === id);
+      });
+    });
+  }, {
+    rootMargin: "-30% 0px -55% 0px",
+    threshold: 0,
+  });
+
+  items.forEach(it => {
+    const el = document.getElementById(it.id);
+    if (el) _sideNavObserver.observe(el);
   });
 }
 
