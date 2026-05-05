@@ -470,11 +470,141 @@ def fetch_walkerplus_genre():
     return out
 
 
+# Bandsintown — concert tracker by artist (per-artist API queries)
+# English region → JP prefecture mapping for venues
+BIT_PREF_MAP = {
+    "Tokyo": "東京", "Osaka": "大阪", "Kyoto": "京都",
+    "Kanagawa": "神奈川", "Hokkaido": "北海道",
+    "Hyogo": "兵庫", "Aichi": "愛知", "Saitama": "埼玉",
+    "Chiba": "千葉", "Fukuoka": "福岡", "Nara": "奈良",
+    "Hiroshima": "広島", "Miyagi": "宮城", "Niigata": "新潟",
+    "Shizuoka": "静岡", "Okinawa": "沖縄",
+}
+
+
+def fetch_bandsintown():
+    """Bandsintown — concerts by tracked artist.
+
+    Configured via:
+      - data/bandsintown_artists.json  (list of artist names)
+      - BANDSINTOWN_API_KEY env var    (your app_id from bandsintown.com/api)
+
+    Filters to Japan-only events. Polite 0.5s delay per artist call.
+    Returns empty if either config missing — fail-soft.
+    """
+    import os
+    import urllib.parse
+
+    api_key = os.environ.get("BANDSINTOWN_API_KEY", "").strip()
+    if not api_key:
+        print("  [bandsintown] BANDSINTOWN_API_KEY not set, skipping",
+              file=sys.stderr)
+        return []
+
+    artists_path = DATA / "bandsintown_artists.json"
+    if not artists_path.exists():
+        print("  [bandsintown] data/bandsintown_artists.json missing, skipping",
+              file=sys.stderr)
+        return []
+
+    try:
+        cfg = json.loads(artists_path.read_text(encoding="utf-8"))
+        artists = cfg.get("artists", []) or []
+    except Exception as e:
+        print(f"  [bandsintown] config parse error: {e}", file=sys.stderr)
+        return []
+
+    if not artists:
+        return []
+
+    headers = {
+        "User-Agent": "YoroBot/0.1 (+https://github.com/QA-Ray/yoro)",
+        "Accept": "application/json",
+    }
+
+    out = []
+    for artist in artists:
+        encoded = urllib.parse.quote(artist, safe="")
+        url = (
+            f"https://rest.bandsintown.com/artists/{encoded}/events"
+            f"?app_id={urllib.parse.quote(api_key)}&date=upcoming"
+        )
+        try:
+            r = requests.get(url, headers=headers, timeout=12)
+        except Exception as e:
+            print(f"  [bandsintown {artist}] network: {e}", file=sys.stderr)
+            time.sleep(0.5)
+            continue
+
+        if r.status_code != 200:
+            print(f"  [bandsintown {artist}] HTTP {r.status_code}",
+                  file=sys.stderr)
+            time.sleep(0.5)
+            continue
+
+        try:
+            data = r.json()
+        except Exception:
+            time.sleep(0.5)
+            continue
+
+        if not isinstance(data, list):
+            time.sleep(0.5)
+            continue
+
+        japan = 0
+        for ev in data:
+            venue = ev.get("venue", {}) or {}
+            if (venue.get("country") or "").lower() != "japan":
+                continue
+            dt = (ev.get("datetime") or "")[:10]
+            if not dt:
+                continue
+
+            artist_obj = ev.get("artist") or {}
+            artist_name = artist_obj.get("name") or artist
+            ev_title = ev.get("title") or ev.get("description") or \
+                       f"{artist_name} @ {venue.get('name','')}"
+
+            region = venue.get("region", "") or ""
+            prefecture = BIT_PREF_MAP.get(region, region) or "東京"
+
+            image = (artist_obj.get("image_url") or
+                     artist_obj.get("thumb_url") or "")
+
+            out.append({
+                "id": f"bit-{ev.get('id') or stable_id('bit', artist_name, dt)}",
+                "title_ja": ev_title,
+                "title_zh": ev_title,
+                "category": "音楽",
+                "kanji": "響",
+                "date_start": dt,
+                "date_end": dt,
+                "prefecture": prefecture,
+                "city": venue.get("city", "") or "",
+                "venue": venue.get("name", "") or "",
+                "description_ja": (ev.get("description") or "")[:140] or
+                                  f"{artist_name} live",
+                "description_zh": (ev.get("description") or "")[:140] or
+                                  f"{artist_name} live",
+                "url": ev.get("url", "") or "",
+                "image_url": image,
+                "featured": False,
+                "source": "bandsintown",
+            })
+            japan += 1
+        print(f"  [bandsintown {artist}] {japan} Japan events")
+        time.sleep(0.5)
+
+    return out
+
+
 # Add new sources here. Each is (name, fetch_function).
 SOURCES = [
     ("connpass", fetch_connpass),
     ("walkerplus", fetch_walkerplus),
     ("walkerplus_genre", fetch_walkerplus_genre),
+    ("bandsintown", fetch_bandsintown),
 ]
 
 

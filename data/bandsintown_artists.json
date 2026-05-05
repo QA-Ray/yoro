@@ -1,0 +1,13 @@
+{
+  "_comment": "List artists you want Bandsintown to track. One name per entry. Match must be exact (Bandsintown's official artist name). Add/remove freely; scraper picks up changes on next run.",
+  "_examples": "YOASOBI, King Gnu, Vaundy, Mrs. GREEN APPLE, Official髭男dism, Aimer, Ado, Taylor Swift, Coldplay",
+  "artists": [
+    "YOASOBI",
+    "King Gnu",
+    "Vaundy",
+    "Mrs. GREEN APPLE",
+    "Official髭男dism",
+    "Aimer",
+    "Ado"
+  ]
+}

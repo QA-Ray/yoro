@@ -26,6 +26,7 @@ jobs:
       - name: Run scrapers
         env:
           MYMEMORY_EMAIL: ${{ secrets.MYMEMORY_EMAIL }}
+          BANDSINTOWN_API_KEY: ${{ secrets.BANDSINTOWN_API_KEY }}
         run: python scrapers/fetch.py
 
       - name: Commit if data changed
