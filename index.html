@@ -600,6 +600,31 @@
     gap: 6px;
     flex-wrap: wrap;
   }
+  .filters-prefecture {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 32px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    animation: slide-down var(--motion-normal) var(--ease-paper);
+  }
+  .filters-prefecture[hidden] { display: none; }
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  /* Prefecture pills slightly smaller + softer than region pills */
+  .filters-prefecture .pill {
+    font-size: 12px;
+    padding: 5px 12px;
+    color: var(--ink-faint);
+  }
+  .filters-prefecture .pill.active {
+    background: var(--vermillion);
+    color: var(--paper-white);
+  }
   .pill-count {
     font-family: "JetBrains Mono", monospace;
     font-size: 10px;
@@ -2124,6 +2149,8 @@
     <button class="pill" data-region="okinawa">冲绳 <span class="pill-count">—</span></button>
   </div>
 
+  <div class="filters-prefecture" id="filterPrefecture" hidden></div>
+
   <section class="filters">
     <div class="filter-group" data-filter-type="time" id="filterWhen">
       <span class="filter-label">WHEN</span>
@@ -2218,13 +2245,39 @@ const REGIONS = {
   "沖縄": "okinawa"
 };
 
+// Build region → prefectures map from REGIONS (already defined above)
+const REGION_PREFS = {};
+for (const [pref, reg] of Object.entries(REGIONS)) {
+  (REGION_PREFS[reg] = REGION_PREFS[reg] || []).push(pref);
+}
+
+const _savedFilters = (() => {
+  try { return JSON.parse(localStorage.getItem("yoro_filters") || "{}"); }
+  catch { return {}; }
+})();
+
 let state = {
   events: [],
   places: [],
-  filters: { when: "all", cat: "all", q: "", region: "all" },
+  filters: {
+    when:       "all",
+    cat:        "all",
+    q:          "",
+    region:     _savedFilters.region     || "all",
+    prefecture: _savedFilters.prefecture || "all",
+  },
   tab: "events",
   favs: new Set(JSON.parse(localStorage.getItem("yoro_favs") || "[]"))
 };
+
+function persistFilters() {
+  try {
+    localStorage.setItem("yoro_filters", JSON.stringify({
+      region: state.filters.region,
+      prefecture: state.filters.prefecture,
+    }));
+  } catch {}
+}
 
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
@@ -2287,6 +2340,7 @@ function getActiveItems() {
 
   return items.filter(item => {
     if (f.region !== "all" && REGIONS[item.prefecture] !== f.region) return false;
+    if (f.prefecture !== "all" && item.prefecture !== f.prefecture) return false;
 
     if (f.q) {
       const q = f.q.toLowerCase();
@@ -2556,6 +2610,7 @@ function render() {
   }
   attachCardInteractions();
   renderSideNav();
+  renderPrefectureFilter();
 }
 
 /* ========== Editorial section-based layout (events tab) ========== */
@@ -2705,12 +2760,15 @@ function renderListItem(ev, n, compact) {
   `;
 }
 
-function updateRegionCounts() {
-  let pool;
-  if (state.tab === "events") pool = state.events.filter(e => !e.hero);
-  else if (state.tab === "places") pool = state.places;
-  else pool = [...state.events.filter(e => !e.hero), ...state.places].filter(i => state.favs.has(i.id));
+function getPool() {
+  if (state.tab === "events") return state.events.filter(e => !e.hero);
+  if (state.tab === "places") return state.places;
+  const all = [...state.events.filter(e => !e.hero), ...state.places];
+  return all.filter(i => state.favs.has(i.id));
+}
 
+function updateRegionCounts() {
+  const pool = getPool();
   const counts = { all: pool.length };
   pool.forEach(item => {
     const r = REGIONS[item.prefecture];
@@ -2726,6 +2784,40 @@ function updateRegionCounts() {
       pill.style.display = n > 0 ? "" : "none";
     }
   });
+}
+
+function renderPrefectureFilter() {
+  const wrap = $("#filterPrefecture");
+  if (!wrap) return;
+  const region = state.filters.region;
+  if (region === "all") {
+    wrap.hidden = true;
+    if (state.filters.prefecture !== "all") {
+      state.filters.prefecture = "all";
+      persistFilters();
+    }
+    return;
+  }
+  const prefs = REGION_PREFS[region] || [];
+  // Filter pool to only events in this region (so counts reflect region)
+  const pool = getPool().filter(item => REGIONS[item.prefecture] === region);
+  const counts = {};
+  pool.forEach(item => {
+    counts[item.prefecture] = (counts[item.prefecture] || 0) + 1;
+  });
+  const visible = prefs.filter(p => counts[p] > 0);
+  if (visible.length === 0) {
+    wrap.hidden = true;
+    return;
+  }
+  wrap.innerHTML = `
+    <span class="filter-label">PREF · 都道府県</span>
+    <button class="pill ${state.filters.prefecture === 'all' ? 'active' : ''}" data-prefecture="all">全部 <span class="pill-count">${pool.length}</span></button>
+    ${visible.map(p => `
+      <button class="pill ${state.filters.prefecture === p ? 'active' : ''}" data-prefecture="${p}">${p} <span class="pill-count">${counts[p]}</span></button>
+    `).join("")}
+  `;
+  wrap.hidden = false;
 }
 
 function updateTabCounts() {
@@ -2986,7 +3078,19 @@ function bindEvents() {
     const b = e.target.closest(".pill");
     if (!b) return;
     state.filters.region = b.dataset.region;
+    state.filters.prefecture = "all";  // reset sub-filter on region change
     $$("#filterRegion .pill").forEach(p => p.classList.toggle("active", p === b));
+    persistFilters();
+    renderPrefectureFilter();
+    render();
+  });
+
+  $("#filterPrefecture").addEventListener("click", e => {
+    const b = e.target.closest(".pill");
+    if (!b) return;
+    state.filters.prefecture = b.dataset.prefecture;
+    $$("#filterPrefecture .pill").forEach(p => p.classList.toggle("active", p === b));
+    persistFilters();
     render();
   });
 
@@ -3072,6 +3176,10 @@ async function init() {
   renderHero();
   updateTabCounts();
   updateRegionCounts();
+  // Restore saved region pill highlight (if any)
+  $$("#filterRegion .pill").forEach(p =>
+    p.classList.toggle("active", p.dataset.region === state.filters.region)
+  );
   render();
 }
 
