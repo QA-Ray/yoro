@@ -71,9 +71,19 @@ CATEGORY_KEYWORDS = [
     (("展覧", "展示", "美術館", "美術", "ギャラリー", "ミュージアム",
       "博物館", "アート"), "展覧会", "展"),
     (("〜展", "展—", "の展", "展2", "展(", "展《"), "展覧会", "展"),  # title patterns ending in 展
-    # Music
-    (("コンサート", "ライブ", "音楽", "フェスティバル", "オーケストラ",
-      "ジャズ", "クラシック"), "音楽", "音"),
+    # Sports & motorsport — specific markers only (avoid broad "スポーツ" alone)
+    (("F1", "MotoGP", "Formula 1", "フォーミュラ", "Grand Prix", "グランプリ",
+      "サーキット", "ラリー",
+      "野球", "サッカー", "Jリーグ", "Bリーグ",
+      "バスケットボール", "ラグビー", "テニス", "ゴルフ", "卓球",
+      "マラソン", "駅伝", "相撲", "競馬", "競輪", "競艇",
+      "オリンピック", "パラリンピック", "選手権大会",
+      "スポーツ大会", "スポーツフェス"), "スポーツ", "競"),
+    # Live performance / concerts — specific live-event terms only
+    (("コンサート", "ライブ", "オーケストラ",
+      "ジャズ", "クラシック音楽", "ミュージカル",
+      "演劇", "舞台公演", "アイドル", "K-POP", "シンフォニー",
+      "歌劇", "オペラ", "リサイタル"), "音楽", "響"),
     # Nature: flowers, parks, scenic
     (("桜", "さくら", "サクラ", "紅葉", "もみじ", "紫陽花", "あじさい",
       "梅", "藤", "牡丹", "薔薇", "バラ", "ライラック", "コスモス",
@@ -339,7 +349,7 @@ def fetch_walkerplus():
     return out
 
 
-def parse_walkerplus_event(d, prefecture):
+def parse_walkerplus_event(d, prefecture=None):
     name = (d.get("name") or "").strip()
     if not name:
         return None
@@ -354,6 +364,12 @@ def parse_walkerplus_event(d, prefecture):
     venue = loc.get("name", "") if isinstance(loc, dict) else ""
     addr = loc.get("address", {}) if isinstance(loc, dict) else {}
     city = addr.get("addressLocality", "") if isinstance(addr, dict) else ""
+
+    if prefecture is None:
+        region = addr.get("addressRegion", "") if isinstance(addr, dict) else ""
+        prefecture = region.replace("都", "").replace("府", "").replace("県", "").strip()
+        if prefecture not in PREF_KEYWORDS.values():
+            prefecture = guess_prefecture(name + " " + venue) or "東京"
 
     desc = (d.get("description") or "").strip()
     desc_short = desc[:140] + ("…" if len(desc) > 140 else "")
@@ -390,10 +406,75 @@ def parse_walkerplus_event(d, prefecture):
     }
 
 
+# Walkerplus genre feeds — national events filtered by category type.
+# Each entry: (genre_code, display_name, forced_category, forced_kanji)
+# Genre codes discovered at /event_list/eg0108/ etc.
+WALKERPLUS_GENRES = [
+    ("eg0108", "全国スポーツ",   "スポーツ", "競"),
+    ("eg0109", "全国ライブ・音楽", "音楽",   "響"),
+    ("eg0111", "全国舞台・演劇",  "音楽",   "舞"),
+]
+
+
+def fetch_walkerplus_genre():
+    """Walkerplus genre feeds — sports, live music, theater.
+
+    Forces category based on the source genre URL (we trust Walkerplus's
+    own classification more than keyword guessing for these specific types).
+    Yields ~10 events per genre, nationally curated.
+    """
+    headers = {
+        "User-Agent": UA,
+        "Accept-Language": "ja,en;q=0.9",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
+    }
+
+    out = []
+    for code, name, forced_cat, forced_kanji in WALKERPLUS_GENRES:
+        url = f"https://www.walkerplus.com/event_list/{code}/"
+        try:
+            r = requests.get(url, headers=headers, timeout=15)
+            r.raise_for_status()
+        except Exception as e:
+            print(f"  [walkerplus genre {name}] {type(e).__name__}: {e}",
+                  file=sys.stderr)
+            time.sleep(1.5)
+            continue
+
+        blocks = re.findall(
+            r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
+            r.text, re.DOTALL,
+        )
+        added = 0
+        for block in blocks:
+            try:
+                data = json.loads(block)
+            except json.JSONDecodeError:
+                continue
+            items = data if isinstance(data, list) else [data]
+            for item in items:
+                if not isinstance(item, dict) or item.get("@type") != "Event":
+                    continue
+                ev = parse_walkerplus_event(item)  # auto-detect prefecture
+                if not ev:
+                    continue
+                # Override category — trust Walkerplus's genre classification
+                ev["category"] = forced_cat
+                ev["kanji"] = forced_kanji
+                ev["source"] = "walkerplus_genre"
+                out.append(ev)
+                added += 1
+        print(f"  [walkerplus genre {name}] {added} events")
+        time.sleep(1.5)
+
+    return out
+
+
 # Add new sources here. Each is (name, fetch_function).
 SOURCES = [
     ("connpass", fetch_connpass),
     ("walkerplus", fetch_walkerplus),
+    ("walkerplus_genre", fetch_walkerplus_genre),
 ]
 
 

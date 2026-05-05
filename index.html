@@ -847,6 +847,7 @@
   .card[data-cat="マーケット"] { --cat-h: 22; --cat-s: 42%; }
   .card[data-cat="展覧会"]  { --cat-h: 210; --cat-s: 20%; }
   .card[data-cat="音楽"]    { --cat-h: 355; --cat-s: 32%; }
+  .card[data-cat="スポーツ"] { --cat-h: 200; --cat-s: 50%; }
   .card[data-cat="その他"]  { --cat-h: 32;  --cat-s: 18%; }
 
   /* Place subtypes */
@@ -1184,6 +1185,7 @@
   .modal-hero[data-cat="神社"]    { --cat-h: 95;  --cat-s: 25%; }
   .modal-hero[data-cat="商店街"]  { --cat-h: 18;  --cat-s: 40%; }
   .modal-hero[data-cat="散歩道"]  { --cat-h: 100; --cat-s: 22%; }
+  .modal-hero[data-cat="スポーツ"] { --cat-h: 200; --cat-s: 50%; }
   .modal-hero[data-cat="その他"]  { --cat-h: 32;  --cat-s: 18%; }
 
   .modal-hero-kanji {
@@ -1498,6 +1500,8 @@
 
   /* — Subtle section tints — */
   .ed-section-matsuri { background: linear-gradient(180deg, transparent 0%, hsla(8, 30%, 92%, 0.35) 50%, transparent 100%); }
+  .ed-section-live    { background: linear-gradient(180deg, transparent 0%, hsla(355, 25%, 93%, 0.35) 50%, transparent 100%); }
+  .ed-section-sports  { background: linear-gradient(180deg, transparent 0%, hsla(200, 30%, 93%, 0.35) 50%, transparent 100%); }
   .ed-section-nature  { background: linear-gradient(180deg, transparent 0%, hsla(95, 22%, 92%, 0.35) 50%, transparent 100%); }
   .ed-section-art     { background: linear-gradient(180deg, transparent 0%, hsla(245, 15%, 93%, 0.35) 50%, transparent 100%); }
   .ed-section-food    { background: linear-gradient(180deg, transparent 0%, hsla(35, 28%, 92%, 0.35) 50%, transparent 100%); }
@@ -1540,6 +1544,7 @@
   .ed-card[data-cat="マーケット"] { --cat-h: 22; --cat-s: 42%; }
   .ed-card[data-cat="展覧会"]  { --cat-h: 210; --cat-s: 20%; }
   .ed-card[data-cat="音楽"]    { --cat-h: 355; --cat-s: 32%; }
+  .ed-card[data-cat="スポーツ"] { --cat-h: 200; --cat-s: 50%; }
   .ed-card[data-cat="その他"]  { --cat-h: 32;  --cat-s: 18%; }
 
   .ed-bg-kanji {
@@ -2136,6 +2141,8 @@
       <button class="pill" data-cat="グルメ">美食</button>
       <button class="pill" data-cat="マーケット">市集</button>
       <button class="pill" data-cat="展覧会">展览</button>
+      <button class="pill" data-cat="音楽">演出</button>
+      <button class="pill" data-cat="スポーツ">体育</button>
     </div>
 
     <div class="search-box">
@@ -2187,7 +2194,9 @@
 const CAT_LABEL = {
   "祭り": "祭典", "自然": "自然", "アート": "艺术",
   "グルメ": "美食", "マーケット": "市集",
-  "展覧会": "展览", "音楽": "音乐",
+  "展覧会": "展览",
+  "音楽": "演出",
+  "スポーツ": "体育",
   "その他": "活动"
 };
 
@@ -2554,6 +2563,8 @@ function render() {
 const SECTIONS = [
   { key: 'featured', kanji: '特', zh: '本期特集',          en: 'FEATURED',         layout: 'spread', match: e => e.featured },
   { key: 'matsuri',  kanji: '祭', zh: '祭典',              en: 'FESTIVALS',        layout: 'photo',  match: e => e.category === '祭り' },
+  { key: 'live',     kanji: '響', zh: '演出',              en: 'LIVE & STAGE',     layout: 'photo',  match: e => e.category === '音楽' },
+  { key: 'sports',   kanji: '競', zh: '体育',              en: 'SPORTS',           layout: 'list',   match: e => e.category === 'スポーツ' },
   { key: 'nature',   kanji: '緑', zh: '自然',              en: 'NATURE',           layout: 'photo',  match: e => e.category === '自然' },
   { key: 'art',      kanji: '藝', zh: '展覧 · 美術',        en: 'EXHIBITIONS',      layout: 'list',   match: e => e.category === 'アート' || e.category === '展覧会' },
   { key: 'food',     kanji: '食', zh: 'グルメ · 市集',      en: 'FOOD & MARKETS',   layout: 'photo',  match: e => e.category === 'グルメ' || e.category === 'マーケット' },
