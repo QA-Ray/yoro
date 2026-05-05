@@ -470,8 +470,7 @@ def fetch_walkerplus_genre():
     return out
 
 
-# Bandsintown — concert tracker by artist (per-artist API queries)
-# English region → JP prefecture mapping for venues
+# Bandsintown / Ticketmaster — English region → JP prefecture mapping
 BIT_PREF_MAP = {
     "Tokyo": "東京", "Osaka": "大阪", "Kyoto": "京都",
     "Kanagawa": "神奈川", "Hokkaido": "北海道",
@@ -479,6 +478,17 @@ BIT_PREF_MAP = {
     "Chiba": "千葉", "Fukuoka": "福岡", "Nara": "奈良",
     "Hiroshima": "広島", "Miyagi": "宮城", "Niigata": "新潟",
     "Shizuoka": "静岡", "Okinawa": "沖縄",
+}
+
+# City-name fallback (e.g. Ticketmaster sometimes only has the city, not the prefecture)
+CITY_TO_PREF = {
+    "Nagoya": "愛知", "Yokohama": "神奈川",
+    "Sapporo": "北海道", "Hakodate": "北海道",
+    "Kobe": "兵庫", "Kyoto": "京都", "Tokyo": "東京",
+    "Osaka": "大阪", "Nara": "奈良", "Fukuoka": "福岡",
+    "Hiroshima": "広島", "Sendai": "宮城", "Niigata": "新潟",
+    "Shizuoka": "静岡", "Naha": "沖縄", "Gifu": "岐阜",
+    "Saitama": "埼玉", "Chiba": "千葉",
 }
 
 
@@ -622,7 +632,7 @@ def fetch_ticketmaster():
     params = {
         "apikey": api_key,
         "countryCode": "JP",
-        "size": 200,
+        "size": 50,  # cap volume — TM JP coverage is sparse anyway
         "sort": "date,asc",
     }
     try:
@@ -653,6 +663,32 @@ def fetch_ticketmaster():
         "film":               ("アート", "光"),
     }
 
+    SPORT_WORDS_EN = (
+        "basketball", "football", "soccer", "tennis", "golf",
+        "shooting", "skateboard", "squash", "boxing", "wrestl",
+        "athletics", "swim", "track", "marathon", "rugby",
+        "volleyball", "judo", "karate", "kendo", "hockey",
+        "weightlifting", "triathlon", "fencing", "archery",
+        "gymnastics", "sepak", "sailing", "rowing", "canoe",
+        "cycling", "diving", "taekwondo", "baseball",
+    )
+
+    def classify(seg_name, name, classifications):
+        # 1. Direct segment match
+        if seg_name and seg_name.lower() in SEGMENT_MAP:
+            return SEGMENT_MAP[seg_name.lower()]
+        # 2. Genre fallback
+        if classifications:
+            genre = ((classifications[0].get("genre") or {}).get("name") or "").lower()
+            if genre and genre != "undefined" and genre in SEGMENT_MAP:
+                return SEGMENT_MAP[genre]
+        # 3. Keyword on event name (handles Asian Games "Basketball - BKB01")
+        nl = (name or "").lower()
+        if any(w in nl for w in SPORT_WORDS_EN):
+            return "スポーツ", "競"
+        # 4. Default
+        return "音楽", "響"
+
     seg_counts = collections.Counter()
     skip_reasons = collections.Counter()
     out = []
@@ -661,7 +697,7 @@ def fetch_ticketmaster():
         seg_name = ""
         if classifications:
             seg_name = (classifications[0].get("segment") or {}).get("name", "") or ""
-        cat, kanji = SEGMENT_MAP.get(seg_name.lower(), ("音楽", "響"))
+        cat, kanji = classify(seg_name, ev.get("name", ""), classifications)
 
         mapped, reason = parse_ticketmaster_event(ev, cat, kanji)
         if mapped:
@@ -712,10 +748,15 @@ def parse_ticketmaster_event(ev, cat, kanji):
     if cc and cc != "JP":
         return None, "wrong_country"
 
-    venue_name = venue.get("name", "") or ""
-    city = (venue.get("city") or {}).get("name", "") or ""
-    state = (venue.get("state") or {}).get("name", "") or ""
-    prefecture = BIT_PREF_MAP.get(state, state) or guess_prefecture(state + " " + city) or "東京"
+    venue_name = (venue.get("name") or "").strip()
+    city = ((venue.get("city") or {}).get("name") or "").strip()
+    state = ((venue.get("state") or {}).get("name") or "").strip()
+    prefecture = (
+        BIT_PREF_MAP.get(state)
+        or CITY_TO_PREF.get(city)
+        or guess_prefecture(state + " " + city + " " + venue_name)
+        or "東京"
+    )
 
     # Best image: prefer largest by area, ratio 16_9 first
     images = ev.get("images") or []
