@@ -206,6 +206,50 @@
     pointer-events: none;
     user-select: none;
     will-change: transform;
+    z-index: 0;
+  }
+  .hero-photo-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity var(--motion-slow);
+    will-change: opacity;
+  }
+  .hero-photo-bg.active {
+    opacity: 0.85;
+  }
+  .hero-photo-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(43,36,24,0.15) 0%, rgba(43,36,24,0.45) 100%);
+  }
+  /* Mix-blend-mode title when photo bg is active */
+  .hero-story.has-photo .hero-title,
+  .hero-story.has-photo .hero-eyebrow,
+  .hero-story.has-photo .hero-lede,
+  .hero-story.has-photo .hero-meta {
+    color: #fff;
+    mix-blend-mode: difference;
+  }
+  .hero-story.has-photo .hero-eyebrow::before {
+    background: #fff;
+  }
+  .hero-story.has-photo .hero-title .accent {
+    color: #fff;
+  }
+  .hero-story.has-photo .hero-cta {
+    color: #fff;
+    border-bottom-color: #fff;
+    mix-blend-mode: difference;
+  }
+  .hero-story.has-photo .scroll-indicator,
+  .hero-story.has-photo .hero-jp-vertical {
+    color: rgba(255,255,255,0.6);
+    mix-blend-mode: difference;
   }
 
   /* ============== Hero Upcoming Timeline ============== */
@@ -1128,53 +1172,76 @@
     padding: 0 0 96px;
   }
 
-  /* — Section Header — */
-  .ed-section { padding: 64px 0 32px; position: relative; }
-  .ed-section-header {
+  /* — Section Cover (60vh chapter pages) — */
+  .ed-section { padding: 0 0 80px; position: relative; }
+  .ed-section + .ed-section { padding-top: 80px; }
+
+  .ed-section-cover {
+    min-height: 56vh;
     max-width: 1200px;
-    margin: 0 auto 48px;
-    padding: 0 32px;
-    display: grid;
-    grid-template-columns: 80px 1fr auto;
-    gap: 32px;
-    align-items: end;
-    border-bottom: 1px solid var(--ink);
-    padding-bottom: 18px;
-  }
-  .ed-section-kanji {
-    font-family: "Noto Serif JP", serif;
-    font-weight: 900;
-    font-size: 64px;
-    color: var(--vermillion);
-    line-height: 0.9;
-    letter-spacing: -0.02em;
-  }
-  .ed-section-titles {
+    margin: 0 auto;
+    padding: 100px 32px 56px;
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    justify-content: space-between;
   }
-  .ed-section-zh {
-    font-family: "Noto Serif SC", serif;
-    font-weight: 600;
-    font-size: 22px;
-    letter-spacing: 0.16em;
-    color: var(--ink);
-  }
-  .ed-section-en {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 10px;
-    letter-spacing: 0.32em;
-    color: var(--ink-faint);
-    text-transform: uppercase;
-  }
-  .ed-section-num {
+  .cover-num {
     font-family: "Cormorant Garamond", serif;
     font-style: italic;
-    font-weight: 400;
-    font-size: 32px;
+    font-size: 18px;
     color: var(--ink-faint);
-    line-height: 1;
+    letter-spacing: 0.06em;
+    align-self: flex-start;
+  }
+  .cover-kanji {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: clamp(180px, 30vh, 300px);
+    line-height: 0.82;
+    color: var(--vermillion);
+    letter-spacing: -0.04em;
+    display: block;
+    margin: 24px 0;
+    align-self: flex-start;
+    user-select: none;
+  }
+  .cover-meta {
+    align-self: flex-end;
+    text-align: right;
+    border-top: 1px solid var(--ink);
+    padding-top: 18px;
+    min-width: 280px;
+    position: relative;
+  }
+  .cover-meta::before {
+    content: '';
+    position: absolute;
+    top: -1.5px; right: 0;
+    width: 48px; height: 2.5px;
+    background: var(--vermillion);
+  }
+  .cover-zh {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 600;
+    font-size: 28px;
+    letter-spacing: 0.16em;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .cover-en {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    color: var(--vermillion);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .cover-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faint);
   }
 
   /* — Subtle section tints — */
@@ -1235,7 +1302,7 @@
   /* — Spread layout — */
   .ed-spread-wrap {
     max-width: 1200px;
-    margin: 0 auto 56px;
+    margin: 0 auto 96px;
     padding: 0 32px;
   }
   .ed-spread-card {
@@ -1331,12 +1398,43 @@
     padding: 0 32px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 56px 40px;
+    gap: 80px 48px;
   }
   .ed-photo-grid--trio {
-    margin-top: 56px;
-    gap: 32px 40px;
+    margin-top: 72px;
+    gap: 48px 40px;
   }
+  .ed-photo-card {
+    position: relative;
+    transition: transform var(--motion-normal) var(--ease-tilt);
+  }
+  .ed-photo-card::after {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: -20px;
+    transform: translateX(-50%);
+    width: 75%; height: 60px;
+    background: radial-gradient(ellipse at center, rgba(168, 54, 42, 0.18) 0%, transparent 65%);
+    opacity: 0;
+    transition: opacity var(--motion-normal);
+    pointer-events: none;
+    filter: blur(8px);
+  }
+  .ed-photo-card:hover { transform: translateY(-4px); }
+  .ed-photo-card:hover::after { opacity: 1; }
+  .ed-spread-card { position: relative; }
+  .ed-spread-card::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: -32px;
+    width: 60%; height: 80px;
+    background: radial-gradient(ellipse at center, rgba(168, 54, 42, 0.15) 0%, transparent 65%);
+    opacity: 0;
+    transition: opacity var(--motion-normal);
+    pointer-events: none;
+    filter: blur(12px);
+  }
+  .ed-spread-card:hover::after { opacity: 1; }
   .ed-photo-card {
     display: flex;
     flex-direction: column;
@@ -1535,6 +1633,132 @@
   @media (max-width: 600px) {
     .ed-photo-grid { grid-template-columns: 1fr; gap: 36px; }
   }
+
+  /* ============================================================ *
+   * THEME TOGGLE BUTTON
+   * ============================================================ */
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 10px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faint);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all var(--motion-fast);
+    line-height: 1;
+  }
+  .theme-toggle:hover {
+    color: var(--ink);
+    border-color: var(--ink-faint);
+  }
+  .theme-toggle-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ink);
+    transition: all var(--motion-fast);
+  }
+  .topbar-right-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* ============================================================ *
+   * DARK THEME · 黑底白字 modernist variant
+   * Activate with .theme-dark on <html> or ?theme=dark URL param
+   * ============================================================ */
+  :root.theme-dark {
+    --bg: #0e0d0a;
+    --bg-card: #1a1813;
+    --bg-deep: #14130f;
+    --bg-tip: #1f1d18;
+    --ink: #f0ead9;
+    --ink-soft: #a89c84;
+    --ink-faint: #6b6253;
+    --line: rgba(240, 234, 217, 0.12);
+    --line-soft: rgba(240, 234, 217, 0.06);
+    --vermillion: #e6604f;
+    --vermillion-deep: #c4422f;
+    --moss: #8a9a73;
+    --gold: #b8995f;
+  }
+  :root.theme-dark body {
+    background-image:
+      radial-gradient(circle at 25% 25%, rgba(184, 153, 95, 0.04) 0, transparent 45%),
+      radial-gradient(circle at 75% 75%, rgba(230, 96, 79, 0.035) 0, transparent 45%);
+  }
+  :root.theme-dark .topbar {
+    background: rgba(14, 13, 10, 0.92);
+  }
+  :root.theme-dark .hero-story {
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  }
+  :root.theme-dark .hero-watermark {
+    color: var(--vermillion);
+    opacity: 0.13;
+  }
+  :root.theme-dark .ed-section-matsuri {
+    background: linear-gradient(180deg, transparent 0%, hsla(8, 35%, 14%, 0.5) 50%, transparent 100%);
+  }
+  :root.theme-dark .ed-section-nature {
+    background: linear-gradient(180deg, transparent 0%, hsla(95, 22%, 14%, 0.5) 50%, transparent 100%);
+  }
+  :root.theme-dark .ed-section-art {
+    background: linear-gradient(180deg, transparent 0%, hsla(245, 18%, 16%, 0.5) 50%, transparent 100%);
+  }
+  :root.theme-dark .ed-section-food {
+    background: linear-gradient(180deg, transparent 0%, hsla(35, 28%, 14%, 0.5) 50%, transparent 100%);
+  }
+  :root.theme-dark .cover-meta {
+    border-top-color: var(--ink);
+  }
+  /* Make scraped event placeholder gradients darker on dark */
+  :root.theme-dark .ed-card .ed-photo,
+  :root.theme-dark .ed-card .ed-spread-photo,
+  :root.theme-dark .ed-card .ed-list-photo {
+    background-color: hsl(var(--cat-h, 8), var(--cat-s, 50%), 30%);
+  }
+  :root.theme-dark .ed-photo-card::after {
+    background: radial-gradient(ellipse at center, rgba(230, 96, 79, 0.32) 0%, transparent 65%);
+  }
+  :root.theme-dark .ed-spread-card::after {
+    background: radial-gradient(ellipse at center, rgba(230, 96, 79, 0.28) 0%, transparent 65%);
+  }
+  :root.theme-dark .filters-wrap {
+    border-bottom-color: var(--line);
+  }
+  :root.theme-dark .pill.active {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  /* Footer in dark */
+  :root.theme-dark footer {
+    background: var(--bg-deep);
+  }
+  /* Modal in dark */
+  :root.theme-dark .modal-backdrop {
+    background: rgba(0, 0, 0, 0.7);
+  }
+  :root.theme-dark .modal {
+    background: var(--bg-card);
+  }
+  /* Theme toggle dot color in dark mode */
+  :root.theme-dark .theme-toggle-dot {
+    background: var(--paper-white);
+  }
+  /* Theme transition */
+  :root,
+  :root body,
+  :root .topbar,
+  :root .ed-section,
+  :root .hero-story {
+    transition: background-color var(--motion-normal), color var(--motion-normal);
+  }
 </style>
 </head>
 <body data-tab="events">
@@ -1555,14 +1779,21 @@
       <span class="brand-logo">YORO</span>
       <span class="brand-tag">日本本地指南 · LOCAL JAPAN</span>
     </div>
-    <div class="topbar-issue">
-      <span class="issue-jp">立夏</span>
-      <span class="issue-num">2026.05</span>
+    <div class="topbar-right-group">
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+        <span class="theme-toggle-dot"></span>
+        <span id="themeToggleLabel">DARK</span>
+      </button>
+      <div class="topbar-issue">
+        <span class="issue-jp">立夏</span>
+        <span class="issue-num">2026.05</span>
+      </div>
     </div>
   </div>
 </header>
 
 <section class="hero-story" id="heroStory">
+  <div class="hero-photo-bg" id="heroPhotoBg"></div>
   <div class="hero-watermark" id="heroWatermark">祭</div>
   <div class="hero-stamp">
     <div class="hanko hanko-vertical hanko-large" id="heroHanko">今月</div>
@@ -1881,6 +2112,8 @@ function renderHeroUpcoming(currentHeroId) {
 
 function renderHero() {
   const hero = pickHero();
+  const story = $("#heroStory");
+  const photoBg = $("#heroPhotoBg");
   if (hero) {
     $("#heroWatermark").textContent = hero.kanji || "祭";
     $("#heroEyebrow").textContent = `${hero.title_ja} · ${hero.city.toUpperCase()} · ${hero.prefecture.toUpperCase()}`;
@@ -1893,6 +2126,16 @@ function renderHero() {
     $("#heroCta").textContent = "了解详情 →";
     $("#heroJpVertical").textContent = `${hero.title_ja}・${hero.venue}`;
     $("#heroHanko").textContent = hero.season_tag || "今月";
+
+    // Photo treatment with mix-blend-mode if hero has image_url
+    if (hero.image_url) {
+      photoBg.style.backgroundImage = `url('${(hero.image_url || '').replace(/'/g, '%27')}')`;
+      photoBg.classList.add("active");
+      story.classList.add("has-photo");
+    } else {
+      photoBg.classList.remove("active");
+      story.classList.remove("has-photo");
+    }
     renderHeroUpcoming(hero.id);
   } else {
     // Season fallback
@@ -1906,6 +2149,8 @@ function renderHero() {
     $("#heroCta").textContent = "看本月精选 →";
     $("#heroJpVertical").textContent = `${s.season} · YORO`;
     $("#heroHanko").textContent = s.season;
+    photoBg.classList.remove("active");
+    story.classList.remove("has-photo");
     renderHeroUpcoming(null);
   }
 }
@@ -2064,14 +2309,15 @@ function renderEditorial(items) {
 
 function renderSectionHTML(sec, items, idx) {
   const header = `
-    <header class="ed-section-header">
-      <div class="ed-section-kanji">${sec.kanji}</div>
-      <div class="ed-section-titles">
-        <div class="ed-section-zh">${sec.zh}</div>
-        <div class="ed-section-en">${sec.en} · ${padNum(items.length)}</div>
+    <div class="ed-section-cover">
+      <span class="cover-num">N° ${padNum(idx)}</span>
+      <span class="cover-kanji">${sec.kanji}</span>
+      <div class="cover-meta">
+        <div class="cover-zh">${sec.zh}</div>
+        <div class="cover-en">${sec.en}</div>
+        <div class="cover-count">${padNum(items.length)} ${items.length === 1 ? 'event' : 'events'}</div>
       </div>
-      <div class="ed-section-num">N° ${padNum(idx)}</div>
-    </header>
+    </div>
   `;
   let body;
   if (sec.layout === 'spread')             body = renderSpreadSection(items);
@@ -2402,7 +2648,30 @@ async function loadJSON(path) {
   }
 }
 
+function applyTheme(theme) {
+  const html = document.documentElement;
+  if (theme === "dark") html.classList.add("theme-dark");
+  else html.classList.remove("theme-dark");
+  try { localStorage.setItem("yoro_theme", theme); } catch {}
+  const label = document.getElementById("themeToggleLabel");
+  if (label) label.textContent = (theme === "dark") ? "LIGHT" : "DARK";
+}
+
+function initTheme() {
+  const fromUrl = new URLSearchParams(location.search).get("theme");
+  const stored = (() => { try { return localStorage.getItem("yoro_theme"); } catch { return null; } })();
+  applyTheme(fromUrl || stored || "light");
+  const btn = document.getElementById("themeToggle");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      const cur = document.documentElement.classList.contains("theme-dark") ? "dark" : "light";
+      applyTheme(cur === "dark" ? "light" : "dark");
+    });
+  }
+}
+
 async function init() {
+  initTheme();
   bindEvents();
   attachHeroParallax();
   const [ev, pl] = await Promise.all([
