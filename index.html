@@ -2687,48 +2687,97 @@ function bindHeroCarousel(total) {
   const nextBtn = $("#heroArrowNext");
   if (!pages) return;
 
-  // Reset to first page
-  pages.scrollLeft = 0;
+  // Hide all controls if only one page
+  if (total <= 1) {
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (dotsWrap) dotsWrap.style.display = 'none';
+    return;
+  }
+  if (prevBtn) prevBtn.style.display = '';
+  if (nextBtn) nextBtn.style.display = '';
+  if (dotsWrap) dotsWrap.style.display = '';
+
+  // Infinite loop: clone last page to beginning, first page to end.
+  // DOM order: [lastClone, real_0, real_1, ..., real_{N-1}, firstClone]
+  // Total in DOM: N + 2. Initial scroll position is at index 1 (real_0).
+  const realPages = Array.from(pages.children).filter(el => !el.dataset.clone);
+  if (realPages.length === total) {
+    // remove any prior clones (defensive — re-render)
+    Array.from(pages.children).forEach(el => {
+      if (el.dataset.clone) el.remove();
+    });
+    const firstClone = realPages[0].cloneNode(true);
+    firstClone.dataset.clone = 'first';
+    firstClone.setAttribute('aria-hidden', 'true');
+    const lastClone = realPages[total - 1].cloneNode(true);
+    lastClone.dataset.clone = 'last';
+    lastClone.setAttribute('aria-hidden', 'true');
+    pages.appendChild(firstClone);
+    pages.insertBefore(lastClone, pages.firstChild);
+  }
+
+  // Position at first real page (skip the lastClone at index 0)
+  pages.scrollLeft = pages.offsetWidth;
 
   function pageWidth() { return pages.offsetWidth || 1; }
-  function activeIdx() { return Math.round(pages.scrollLeft / pageWidth()); }
+  function rawIdx() { return Math.round(pages.scrollLeft / pageWidth()); }
+  function realIdx() {
+    const r = rawIdx();
+    if (r === 0)         return total - 1;  // on lastClone → represents last real
+    if (r === total + 1) return 0;           // on firstClone → represents first real
+    return r - 1;
+  }
 
-  function updateUI() {
-    const idx = activeIdx();
-    if (dotsWrap) {
-      $$(".hero-dot", dotsWrap).forEach((d, i) =>
-        d.classList.toggle("active", i === idx)
-      );
+  function updateDots() {
+    const idx = realIdx();
+    if (!dotsWrap) return;
+    $$(".hero-dot", dotsWrap).forEach((d, i) =>
+      d.classList.toggle("active", i === idx)
+    );
+  }
+
+  // After a smooth scroll lands on a clone, instant-jump to the real
+  // position so further swipes continue seamlessly.
+  let scrollEndTimer;
+  function checkLoopJump() {
+    const r = rawIdx();
+    if (r === 0) {
+      // at lastClone (visually = last) → jump to real last (index N)
+      pages.style.scrollBehavior = 'auto';
+      pages.scrollLeft = total * pageWidth();
+      requestAnimationFrame(() => { pages.style.scrollBehavior = ''; });
+    } else if (r === total + 1) {
+      // at firstClone (visually = first) → jump to real first (index 1)
+      pages.style.scrollBehavior = 'auto';
+      pages.scrollLeft = 1 * pageWidth();
+      requestAnimationFrame(() => { pages.style.scrollBehavior = ''; });
     }
-    if (prevBtn) prevBtn.disabled = idx <= 0;
-    if (nextBtn) nextBtn.disabled = idx >= total - 1;
   }
 
-  function go(idx) {
-    const clamped = Math.max(0, Math.min(total - 1, idx));
-    pages.scrollTo({ left: clamped * pageWidth(), behavior: 'smooth' });
-  }
-
-  // Bind once per render
   pages.onscroll = () => {
     if (pages._raf) cancelAnimationFrame(pages._raf);
-    pages._raf = requestAnimationFrame(updateUI);
+    pages._raf = requestAnimationFrame(updateDots);
+    clearTimeout(scrollEndTimer);
+    scrollEndTimer = setTimeout(checkLoopJump, 140);
   };
+
+  function goRaw(rawTarget) {
+    pages.scrollTo({ left: rawTarget * pageWidth(), behavior: 'smooth' });
+  }
+
   if (dotsWrap) {
     dotsWrap.onclick = (e) => {
       const btn = e.target.closest("button[data-idx]");
-      if (btn) go(parseInt(btn.dataset.idx, 10));
+      if (!btn) return;
+      const realTarget = parseInt(btn.dataset.idx, 10);
+      goRaw(realTarget + 1);  // +1 to skip lastClone offset
     };
   }
-  if (prevBtn) prevBtn.onclick = () => go(activeIdx() - 1);
-  if (nextBtn) nextBtn.onclick = () => go(activeIdx() + 1);
+  if (prevBtn) prevBtn.onclick = () => goRaw(rawIdx() - 1);
+  if (nextBtn) nextBtn.onclick = () => goRaw(rawIdx() + 1);
 
-  // Hide arrows + dots if only one page
-  if (prevBtn) prevBtn.style.display = total > 1 ? '' : 'none';
-  if (nextBtn) nextBtn.style.display = total > 1 ? '' : 'none';
-  if (dotsWrap) dotsWrap.style.display = total > 1 ? '' : 'none';
-
-  updateUI();
+  updateDots();
 }
 
 function heroTitleZhFor(hero) {
