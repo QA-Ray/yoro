@@ -254,12 +254,20 @@ def fetch_connpass():
     return out
 
 
-# Walkerplus prefecture codes (only the major ones; expand later)
+# Walkerplus prefecture codes — pattern is ar{REGION}{JIS_PREF}
+# Limited to popular tourist destinations to keep run time reasonable.
+# To add more: see https://www.walkerplus.com/event_list/ar{XXYY}/
 WALKERPLUS_PREFS = [
+    ("ar0101", "北海道"),
     ("ar0313", "東京"),
-    ("ar0727", "大阪"),
-    ("ar0726", "京都"),
     ("ar0314", "神奈川"),
+    ("ar0622", "静岡"),
+    ("ar0623", "愛知"),
+    ("ar0726", "京都"),
+    ("ar0727", "大阪"),
+    ("ar0728", "兵庫"),
+    ("ar0729", "奈良"),
+    ("ar1040", "福岡"),
 ]
 
 
