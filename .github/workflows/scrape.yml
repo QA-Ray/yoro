@@ -27,6 +27,8 @@ jobs:
         env:
           MYMEMORY_EMAIL: ${{ secrets.MYMEMORY_EMAIL }}
           BANDSINTOWN_API_KEY: ${{ secrets.BANDSINTOWN_API_KEY }}
+          CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
+          CONSUMER_SECRET: ${{ secrets.CONSUMER_SECRET }}
         run: python scrapers/fetch.py
 
       - name: Commit if data changed

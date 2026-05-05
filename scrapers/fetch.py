@@ -599,12 +599,130 @@ def fetch_bandsintown():
     return out
 
 
+def fetch_ticketmaster():
+    """Ticketmaster Discovery API — concerts & sports events worldwide.
+
+    Uses CONSUMER_KEY env var as the `apikey` query parameter.
+    (CONSUMER_SECRET is for OAuth Partner API, unused here.)
+
+    Free tier: 5000 calls/day, 5 calls/sec. We make 2 calls per run
+    (Music + Sports), filtered to JP. Plenty of headroom.
+    """
+    import os
+    api_key = os.environ.get("CONSUMER_KEY", "").strip()
+    if not api_key:
+        print("  [ticketmaster] CONSUMER_KEY not set, skipping",
+              file=sys.stderr)
+        return []
+
+    base = "https://app.ticketmaster.com/discovery/v2/events.json"
+    out = []
+
+    SEGMENTS = [
+        ("Music",  "音楽",   "響"),
+        ("Sports", "スポーツ", "競"),
+    ]
+
+    for segment, cat, kanji in SEGMENTS:
+        params = {
+            "apikey": api_key,
+            "countryCode": "JP",
+            "size": 100,
+            "classificationName": segment,
+            "sort": "date,asc",
+        }
+        try:
+            r = requests.get(
+                base, params=params, timeout=15,
+                headers={"User-Agent": "YoroBot/0.1 (+https://github.com/QA-Ray/yoro)"},
+            )
+            if r.status_code != 200:
+                print(f"  [ticketmaster {segment}] HTTP {r.status_code}",
+                      file=sys.stderr)
+                time.sleep(0.5)
+                continue
+            data = r.json()
+        except Exception as e:
+            print(f"  [ticketmaster {segment}] {type(e).__name__}: {e}",
+                  file=sys.stderr)
+            time.sleep(0.5)
+            continue
+
+        events = (data.get("_embedded") or {}).get("events", [])
+        added = 0
+        for ev in events:
+            mapped = parse_ticketmaster_event(ev, cat, kanji)
+            if mapped:
+                out.append(mapped)
+                added += 1
+        print(f"  [ticketmaster {segment}] {added} JP events")
+        time.sleep(0.5)
+
+    return out
+
+
+def parse_ticketmaster_event(ev, cat, kanji):
+    name = (ev.get("name") or "").strip()
+    if not name:
+        return None
+
+    dates = ev.get("dates") or {}
+    start = (dates.get("start") or {}).get("localDate") or ""
+    if not start:
+        return None
+    end = (dates.get("end") or {}).get("localDate") or start
+
+    venues = (ev.get("_embedded") or {}).get("venues") or []
+    venue = venues[0] if venues else {}
+    cc = ((venue.get("country") or {}).get("countryCode") or "").upper()
+    if cc and cc != "JP":
+        return None
+
+    venue_name = venue.get("name", "") or ""
+    city = (venue.get("city") or {}).get("name", "") or ""
+    state = (venue.get("state") or {}).get("name", "") or ""
+    prefecture = BIT_PREF_MAP.get(state, state) or guess_prefecture(state + " " + city) or "東京"
+
+    # Best image: prefer largest by area, ratio 16_9 first
+    images = ev.get("images") or []
+    image = ""
+    if images:
+        sixteen_nine = [i for i in images if i.get("ratio") == "16_9"]
+        pool = sixteen_nine or images
+        best = max(pool, key=lambda i: (i.get("width") or 0) * (i.get("height") or 0))
+        image = best.get("url") or ""
+
+    desc = ((ev.get("info") or ev.get("pleaseNote") or "") or "").strip()[:140]
+    if not desc:
+        desc = f"{name} · live in Japan"
+
+    return {
+        "id": f"tm-{ev.get('id') or stable_id('tm', name, start)}",
+        "title_ja": name,
+        "title_zh": name,
+        "category": cat,
+        "kanji": kanji,
+        "date_start": start,
+        "date_end": end,
+        "prefecture": prefecture,
+        "city": city,
+        "venue": venue_name,
+        "description_ja": desc,
+        "description_zh": desc,
+        "url": ev.get("url", "") or "",
+        "image_url": image,
+        "featured": False,
+        "source": "ticketmaster",
+    }
+
+
 # Add new sources here. Each is (name, fetch_function).
 SOURCES = [
     ("connpass", fetch_connpass),
     ("walkerplus", fetch_walkerplus),
     ("walkerplus_genre", fetch_walkerplus_genre),
     ("bandsintown", fetch_bandsintown),
+    ("ticketmaster", fetch_ticketmaster),
 ]
 
 
