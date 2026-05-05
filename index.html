@@ -1649,6 +1649,51 @@
     width: 48px; height: 2.5px;
     background: var(--vermillion);
   }
+
+  /* ── Section cover entrance animation ── */
+  .ed-section-cover .cover-num,
+  .ed-section-cover .cover-meta {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s var(--ease-paper),
+                transform 0.7s var(--ease-paper);
+  }
+  .ed-section-cover .cover-kanji {
+    opacity: 0;
+    transform: translateY(60px) scale(0.94);
+    transform-origin: left bottom;
+    transition: opacity 0.9s var(--ease-paper),
+                transform 0.9s var(--ease-paper);
+  }
+  .ed-section-cover .cover-meta::before {
+    transition: width 0.6s var(--ease-paper) 0.5s;
+  }
+  .ed-section-cover:not(.revealed) .cover-meta::before {
+    width: 0;
+  }
+  .ed-section-cover.revealed .cover-num {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .ed-section-cover.revealed .cover-kanji {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition-delay: 0.12s;
+  }
+  .ed-section-cover.revealed .cover-meta {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.32s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ed-section-cover .cover-num,
+    .ed-section-cover .cover-meta,
+    .ed-section-cover .cover-kanji {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .ed-section-cover .cover-meta::before { width: 48px !important; }
+  }
   .cover-zh {
     font-family: "Noto Serif SC", serif;
     font-weight: 600;
@@ -2902,6 +2947,7 @@ function render() {
     }).join("") + `</div>`;
   }
   attachCardInteractions();
+  attachSectionCovers();
   renderSideNav();
   renderPrefectureFilter();
 }
@@ -3263,6 +3309,25 @@ function attachCardInteractions() {
       attachTilt(card);
     }
   });
+}
+
+let _coverObserver = null;
+function attachSectionCovers() {
+  const covers = $$(".ed-section-cover");
+  if (reduceMotion) {
+    covers.forEach(c => c.classList.add("revealed"));
+    return;
+  }
+  if (_coverObserver) _coverObserver.disconnect();
+  _coverObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("revealed");
+        _coverObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.18, rootMargin: "0px 0px -8% 0px" });
+  covers.forEach(c => _coverObserver.observe(c));
 }
 
 /* ========== Side Section Nav ========== */
