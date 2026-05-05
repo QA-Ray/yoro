@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>YORO · 日本本地指南</title>
+<title>YORO · 遠方便り｜日本</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;900&family=Noto+Serif+JP:wght@400;600;900&family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
@@ -1573,13 +1573,28 @@
     background: var(--bg-deep);
   }
   footer .accent { color: var(--vermillion); }
-  footer .footer-mark {
-    font-family: "Noto Serif JP", serif;
-    font-size: 18px;
-    letter-spacing: 0.4em;
+  .footer-poem {
+    font-family: "Noto Serif JP", "Noto Serif SC", serif;
+    font-weight: 400;
+    font-size: 22px;
+    letter-spacing: 0.32em;
     color: var(--ink);
-    margin-bottom: 16px;
-    display: block;
+    margin-bottom: 4px;
+  }
+  .footer-poem-en {
+    font-family: "Cormorant Garamond", "Noto Serif SC", serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    margin-bottom: 18px;
+  }
+  .footer-rule {
+    width: 32px;
+    height: 1px;
+    background: var(--vermillion);
+    margin: 0 auto 18px;
+    opacity: 0.7;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -2280,7 +2295,7 @@
   <div class="topbar-inner">
     <div class="brand">
       <span class="brand-logo">YORO</span>
-      <span class="brand-tag">日本本地指南 · LOCAL JAPAN</span>
+      <span class="brand-tag">遠方便り · LETTERS FROM AFAR</span>
     </div>
     <div class="topbar-right-group">
       <div class="topbar-issue">
@@ -2303,8 +2318,8 @@
   <div class="season-kanji"><span>立</span><span>夏</span></div>
   <div class="season-rule"></div>
   <div class="season-text">
-    <div class="season-text-zh">青もみじと祭の季節</div>
-    <div class="season-text-meta">RIKKA · BEGINNING OF SUMMER · MAY 5</div>
+    <div class="season-text-zh">風が緑になる頃</div>
+    <div class="season-text-meta">RIKKA · WHEN THE WIND TURNS GREEN</div>
   </div>
   <div class="season-fl">No. 05</div>
 </aside>
@@ -2383,8 +2398,10 @@
 </div>
 
 <footer>
-  <span class="footer-mark">養老</span>
-  <div>© YORO 2026 · 日本本地指南</div>
+  <div class="footer-poem">遠方を、近くに。</div>
+  <div class="footer-poem-en">Bringing the far, near.</div>
+  <div class="footer-rule"></div>
+  <div>© YORO 2026 · 遠方便り</div>
   <div style="margin-top: 8px;">
     <span class="accent">SEED DATA · v0.4</span>
     <span style="margin: 0 12px;">·</span>
