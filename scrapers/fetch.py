@@ -62,17 +62,34 @@ def guess_prefecture(text):
 
 
 # Category + kanji guesser based on Japanese keywords.
-# Order matters — earlier wins.
+# Order matters — earlier wins. Specific patterns first, then broad.
 CATEGORY_KEYWORDS = [
-    (("祭", "まつり", "Festival"), "祭り", "祭"),
-    (("花火",), "祭り", "火"),
-    (("展覧", "展示", "美術", "アート", "ギャラリー", "ミュージアム"), "展覧会", "展"),
-    (("コンサート", "ライブ", "音楽", "フェス"), "音楽", "音"),
-    (("桜", "さくら", "紅葉", "紫陽花", "あじさい", "梅", "藤",
-      "牡丹", "薔薇", "バラ", "ライラック", "コスモス",
-      "イルミネーション", "庭園", "公園", "ガーデン"), "自然", "花"),
-    (("マーケット", "市場", "蚤の市", "骨董", "フリマ"), "マーケット", "市"),
-    (("グルメ", "ビアガーデン", "ビール", "ワイン", "食"), "グルメ", "食"),
+    # Festivals (specific to祭, not just food fest)
+    (("祭", "まつり", "神輿", "山車", "屋台"), "祭り", "祭"),
+    (("花火", "花火大会"), "祭り", "火"),
+    # Exhibitions / Art (covers most "展" events including character/IP exhibits)
+    (("展覧", "展示", "美術館", "美術", "ギャラリー", "ミュージアム",
+      "博物館", "アート"), "展覧会", "展"),
+    (("〜展", "展—", "の展", "展2", "展(", "展《"), "展覧会", "展"),  # title patterns ending in 展
+    # Music
+    (("コンサート", "ライブ", "音楽", "フェスティバル", "オーケストラ",
+      "ジャズ", "クラシック"), "音楽", "音"),
+    # Nature: flowers, parks, scenic
+    (("桜", "さくら", "サクラ", "紅葉", "もみじ", "紫陽花", "あじさい",
+      "梅", "藤", "牡丹", "薔薇", "バラ", "ライラック", "コスモス",
+      "ひまわり", "向日葵", "チューリップ", "菜の花",
+      "イルミネーション", "庭園", "公園", "ガーデン",
+      "動物園", "水族館", "植物園", "牧場",
+      "狩り", "苺", "イチゴ", "ぶどう", "りんご", "みかん"), "自然", "花"),
+    # Food / drink
+    (("グルメ", "ビアガーデン", "ビール", "ワイン", "日本酒",
+      "カフェ", "ラーメン", "焼肉", "寿司", "スイーツ"), "グルメ", "食"),
+    # Markets
+    (("マーケット", "市場", "蚤の市", "骨董", "フリマ", "朝市", "夜市"), "マーケット", "市"),
+    # Catch generic event types as アート (cultural/experience)
+    (("謎解き", "謎解", "イベント", "体験", "ワークショップ",
+      "ショー", "パフォーマンス", "プロジェクションマッピング",
+      "リアル脱出", "脱出ゲーム", "アトラクション"), "アート", "事"),
 ]
 
 
@@ -82,7 +99,9 @@ def guess_cat_kanji(name, desc=""):
         for kw in keywords:
             if kw in text:
                 return cat, kanji
-    return "祭り", "事"
+    # Unmatched fallback: generic "other event" — surfaces in その他 section,
+    # avoids mislabeling random events as 祭り.
+    return "その他", "事"
 
 
 def stable_id(prefix, *seeds):
