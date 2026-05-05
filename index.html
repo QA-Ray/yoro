@@ -2844,7 +2844,24 @@ function bindHeroCarousel(total) {
   if (nextBtn) nextBtn.onclick = () => goRaw(rawIdx() + 1);
 
   updateDots();
+
+  // ── Auto-advance carousel ──
+  if (_heroAutoTimer) { clearInterval(_heroAutoTimer); _heroAutoTimer = null; }
+  if (!reduceMotion) {
+    let hovered = false;
+    const story = $("#heroStory");
+    if (story) {
+      story.onmouseenter = () => { hovered = true; };
+      story.onmouseleave = () => { hovered = false; };
+    }
+    _heroAutoTimer = setInterval(() => {
+      if (hovered || document.hidden) return;
+      goRaw(rawIdx() + 1);
+    }, 4500);
+  }
 }
+
+let _heroAutoTimer = null;
 
 function heroTitleZhFor(hero) {
   // Per-event custom hero titles (editorial display copy, not the small title_zh).
