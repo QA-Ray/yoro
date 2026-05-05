@@ -532,7 +532,7 @@
     padding: 28px 32px 96px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: 380px;
+    grid-auto-rows: 460px;
     grid-auto-flow: dense;
     gap: 20px;
     perspective: var(--perspective-card);
@@ -549,7 +549,7 @@
   }
 
   @media (max-width: 900px) {
-    .grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 360px; }
+    .grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 440px; }
     .card.size-big { grid-column: span 2; grid-row: span 2; }
     .card.size-wide { grid-column: span 2; flex-direction: row; }
     .tabs-jp-mark { display: none; }
@@ -644,7 +644,7 @@
   .card-image {
     position: relative;
     flex-shrink: 0;
-    height: 160px;
+    height: 180px;
     overflow: hidden;
     background:
       linear-gradient(135deg,
@@ -721,11 +721,12 @@
   .card.has-editorial .card-fav { right: auto; left: 12px; }
 
   .card-body {
-    padding: 24px 26px 26px;
+    padding: 22px 24px 22px;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
     overflow: hidden;
+    min-height: 0;
   }
   .card.size-big .card-body { padding: 36px 36px 32px; }
   .card.size-wide .card-body { padding: 32px 32px 28px; flex: 1; }
@@ -756,14 +757,25 @@
   .card-title {
     font-family: "Noto Serif SC", "Noto Serif JP", serif;
     font-weight: 600;
-    font-size: 22px;
+    font-size: 21px;
     line-height: 1.4;
     color: var(--ink);
     letter-spacing: 0.02em;
     margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
   }
-  .card.size-big .card-title { font-size: 32px; line-height: 1.25; margin-bottom: 6px; }
-  .card.size-wide .card-title { font-size: 26px; line-height: 1.3; }
+  .card.size-big .card-title {
+    font-size: 32px; line-height: 1.25; margin-bottom: 6px;
+    -webkit-line-clamp: 3;
+  }
+  .card.size-wide .card-title {
+    font-size: 26px; line-height: 1.3;
+    -webkit-line-clamp: 2;
+  }
 
   .card-title-ja {
     font-family: "Noto Serif JP", serif;
@@ -773,8 +785,16 @@
     letter-spacing: 0.05em;
     margin-bottom: 12px;
     line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .card.size-big .card-title-ja { font-size: 13px; margin-bottom: 16px; }
+  .card.size-big .card-title-ja {
+    font-size: 13px; margin-bottom: 16px;
+    -webkit-line-clamp: 2;
+  }
 
   .card-desc {
     font-size: 13px;
@@ -786,9 +806,12 @@
     overflow: hidden;
   }
   .card.size-big .card-desc {
+    display: block;
     font-size: 14.5px;
     line-height: 1.95;
-    -webkit-line-clamp: 5;
+    -webkit-line-clamp: unset;
+    max-height: 280px;
+    overflow: hidden;
   }
   .card.size-big .card-desc::first-letter {
     font-family: "Noto Serif SC", serif;
@@ -801,11 +824,13 @@
   }
   .card.size-wide .card-desc { -webkit-line-clamp: 4; }
   .card-desc.no-clamp {
-    display: block;
-    -webkit-line-clamp: unset;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .card-loc {
-    margin-top: 18px;
+    margin-top: auto;
     padding-top: 14px;
     border-top: 1px solid var(--line-soft);
     font-size: 11px;
@@ -814,6 +839,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-shrink: 0;
   }
   .card-loc::before {
     content: "";
@@ -827,12 +853,16 @@
   .place-tip {
     background: var(--bg-tip);
     border-left: 2px solid var(--vermillion);
-    padding: 12px 14px;
-    font-size: 12.5px;
+    padding: 10px 12px;
+    font-size: 12px;
     color: var(--ink);
-    line-height: 1.85;
-    margin: 14px 0 0;
+    line-height: 1.7;
+    margin: 12px 0 0;
     position: relative;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .place-tip::before {
     content: "内行 TIP";
