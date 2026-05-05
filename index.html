@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YORO · 日本本地指南</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;900&family=Noto+Serif+JP:wght@400;600;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* Palette · 和纸墨色 */
+    --bg: #f5f1e8;
+    --bg-card: #fdfbf6;
+    --bg-deep: #ebe5d4;
+    --bg-tip: #f0ead9;
+    --ink: #2b2418;
+    --ink-soft: #6b5d4a;
+    --ink-faint: #9c8e7a;
+    --line: #d9d0bf;
+    --line-soft: #e6dfce;
+    --vermillion: #a8362a;
+    --vermillion-deep: #872617;
+    --moss: #5c6b4f;
+    --gold: #967a4f;
+    --paper-white: #fdfbf6;
+
+    /* 3D System */
+    --perspective-card: 1000px;
+    --perspective-page: 1500px;
+    --tilt-max: 6deg;
+
+    /* Shadows */
+    --shadow-paper-1: 0 1px 2px rgba(43, 36, 24, 0.06);
+    --shadow-paper-2: 0 12px 32px -8px rgba(43, 36, 24, 0.18);
+    --shadow-stamp: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(168, 54, 42, 0.3);
+    --shadow-lift: 0 24px 60px rgba(43, 36, 24, 0.22);
+
+    /* Motion */
+    --motion-fast: 180ms;
+    --motion-normal: 320ms;
+    --motion-slow: 600ms;
+    --ease-paper: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-tilt: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans", system-ui, sans-serif;
+    font-weight: 400;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+  }
+  a { color: var(--ink); text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; background: none; border: none; color: inherit; padding: 0; }
+  ::selection { background: var(--vermillion); color: var(--paper-white); }
+
+  /* ============== Topbar ============== */
+  .topbar {
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: saturate(120%) blur(10px);
+    background: rgba(245, 241, 232, 0.9);
+  }
+  .topbar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 14px; }
+  .brand-logo {
+    font-family: "Noto Serif JP", "Noto Serif SC", serif;
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: 0.22em;
+    color: var(--vermillion);
+  }
+  .brand-tag {
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+  }
+  .topbar-issue {
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.18em;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .topbar-issue .issue-jp {
+    font-family: "Noto Serif JP", serif;
+    color: var(--ink);
+    font-size: 13px;
+    letter-spacing: 0.25em;
+  }
+  .topbar-issue .issue-num {
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  /* ============== Hanko · 朱印 ============== */
+  .hanko {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--vermillion);
+    color: var(--paper-white);
+    font-family: "Noto Serif JP", "Noto Serif SC", serif;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border-radius: 2px;
+    box-shadow: var(--shadow-stamp);
+    position: relative;
+    transform: rotate(-3deg);
+    user-select: none;
+    transition: transform var(--motion-fast) var(--ease-tilt);
+  }
+  .hanko::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,.18) 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(0,0,0,.15) 0%, transparent 60%);
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+  .hanko-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    line-height: 1.05;
+    padding: 8px 4px;
+  }
+  .hanko-large {
+    width: 56px;
+    height: 76px;
+    font-size: 20px;
+    transform: rotate(-4deg);
+  }
+  .hanko-small {
+    padding: 5px 9px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    transform: rotate(-2deg);
+  }
+  .hanko-corner {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    z-index: 3;
+    width: 36px;
+    height: 50px;
+    font-size: 13px;
+  }
+
+  /* ============== Hero Story ============== */
+  .hero-story {
+    position: relative;
+    min-height: 78vh;
+    padding: 120px 32px 100px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  }
+  .hero-watermark {
+    position: absolute;
+    right: -10vw;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: "Noto Serif JP", serif;
+    font-size: clamp(420px, 90vh, 900px);
+    font-weight: 900;
+    color: var(--vermillion);
+    opacity: 0.07;
+    line-height: 0.9;
+    pointer-events: none;
+    user-select: none;
+    will-change: transform;
+  }
+  .hero-stamp {
+    position: absolute;
+    top: 56px;
+    left: 32px;
+    z-index: 3;
+  }
+  .hero-content {
+    max-width: 720px;
+    position: relative;
+    z-index: 2;
+    margin: 0 auto 0 64px;
+  }
+  .hero-eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    color: var(--vermillion);
+    text-transform: uppercase;
+    margin-bottom: 36px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .hero-eyebrow::before {
+    content: "";
+    width: 28px;
+    height: 1px;
+    background: var(--vermillion);
+  }
+  .hero-title {
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: clamp(44px, 6.5vw, 80px);
+    line-height: 1.18;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    margin-bottom: 36px;
+  }
+  .hero-title .accent { color: var(--vermillion); }
+  .hero-lede {
+    font-size: 16px;
+    line-height: 2;
+    max-width: 540px;
+    color: var(--ink-soft);
+    margin-bottom: 36px;
+  }
+  .hero-meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--ink-faint);
+    margin-bottom: 28px;
+  }
+  .hero-meta .dot { margin: 0 12px; opacity: 0.5; }
+  .hero-cta {
+    display: inline-block;
+    font-family: "Noto Serif SC", serif;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--vermillion);
+    border-bottom: 1px solid var(--vermillion);
+    padding: 4px 0;
+    transition: gap var(--motion-fast) var(--ease-tilt);
+  }
+  .hero-cta:hover { color: var(--vermillion-deep); }
+  .hero-jp-vertical {
+    position: absolute;
+    bottom: 48px;
+    right: 48px;
+    font-family: "Noto Serif JP", serif;
+    font-size: 12px;
+    letter-spacing: 0.4em;
+    color: var(--ink-faint);
+    writing-mode: vertical-rl;
+    z-index: 2;
+    line-height: 2;
+  }
+  .scroll-indicator {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    z-index: 2;
+    animation: bob 2.4s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
+    50% { transform: translateX(-50%) translateY(6px); opacity: 1; }
+  }
+
+  /* ============== Region Row ============== */
+  .filters-wrap {
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  .filters-region {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 32px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .pill-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    margin-left: 6px;
+    opacity: 0.6;
+  }
+  .pill.active .pill-count { opacity: 0.85; }
+
+  /* ============== Filters ============== */
+  .filters {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px 32px 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    align-items: center;
+  }
+  .filter-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.22em;
+    margin-right: 12px;
+    text-transform: uppercase;
+  }
+  .pill {
+    padding: 6px 14px;
+    font-size: 13px;
+    border-radius: 999px;
+    color: var(--ink-soft);
+    transition: all var(--motion-fast);
+  }
+  .pill:hover { color: var(--ink); }
+  .pill.active {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .search-box {
+    margin-left: auto;
+    position: relative;
+  }
+  .search-box input {
+    border: none;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    padding: 6px 24px 6px 0;
+    font-family: inherit;
+    font-size: 14px;
+    width: 220px;
+    color: var(--ink);
+    outline: none;
+    transition: 0.2s;
+  }
+  .search-box input:focus { border-bottom-color: var(--ink); }
+  .search-box::after {
+    content: "⌕";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-faint);
+    font-size: 16px;
+    pointer-events: none;
+  }
+
+  /* Hide event-only filters when on places tab */
+  body[data-tab="places"] [data-filter-type="time"],
+  body[data-tab="places"] [data-filter-type="cat"] {
+    display: none;
+  }
+
+  /* ============== Tabs ============== */
+  .tabs-wrap {
+    max-width: 1200px;
+    margin: 56px auto 0;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .tabs {
+    display: flex;
+    gap: 0;
+    align-items: flex-end;
+  }
+  .tab {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 18px 28px 16px;
+    color: var(--ink-faint);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all var(--motion-fast);
+    position: relative;
+  }
+  .tab:first-child { padding-left: 0; }
+  .tab:hover { color: var(--ink-soft); }
+  .tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--vermillion);
+  }
+  .tab-jp {
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.08em;
+  }
+  .tab-en {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faint);
+  }
+  .tab.active .tab-en { color: var(--vermillion); }
+  .tab-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    background: var(--bg-deep);
+    padding: 2px 8px;
+    border-radius: 10px;
+    line-height: 1.3;
+  }
+  .tab.active .tab-count {
+    background: var(--vermillion);
+    color: var(--paper-white);
+  }
+  .tabs-jp-mark {
+    position: absolute;
+    right: 32px;
+    bottom: 14px;
+    font-family: "Noto Serif JP", serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--ink-faint);
+  }
+
+  /* ============== Event Grid ============== */
+  .grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 28px 32px 96px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    perspective: var(--perspective-card);
+  }
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .tabs-jp-mark { display: none; }
+  }
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; padding: 20px 20px 72px; }
+    .topbar-inner { padding: 14px 20px; }
+    .hero-story { padding: 80px 20px 80px; min-height: 72vh; }
+    .hero-content { margin-left: 0; }
+    .hero-stamp { left: 20px; top: 32px; }
+    .hero-jp-vertical { right: 20px; bottom: 30px; }
+    .filters-region { padding: 20px 20px 0; }
+    .filters { padding: 14px 20px 22px; gap: 20px; }
+    .search-box { margin-left: 0; width: 100%; }
+    .search-box input { width: 100%; }
+    .tabs-wrap { padding: 0 20px; margin-top: 32px; }
+    .tab { padding: 14px 18px 12px; }
+    .tab-jp { font-size: 16px; }
+  }
+
+  .card {
+    background: var(--bg-card);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform var(--motion-normal) var(--ease-tilt),
+                box-shadow var(--motion-normal) var(--ease-tilt);
+    box-shadow: var(--shadow-x, 0) var(--shadow-y, 4px) 24px -8px rgba(43, 36, 24, 0.10);
+    will-change: transform;
+    transform-style: preserve-3d;
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  .card.revealed {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity var(--motion-slow) var(--ease-paper),
+                transform var(--motion-slow) var(--ease-paper),
+                box-shadow var(--motion-normal) var(--ease-tilt);
+  }
+  .card.tilting {
+    box-shadow: var(--shadow-x, 0) var(--shadow-y, 12px) 36px -10px rgba(43, 36, 24, 0.22);
+  }
+
+  /* Event categories */
+  .card[data-cat="祭り"]    { --cat-h: 8;   --cat-s: 55%; }
+  .card[data-cat="自然"]    { --cat-h: 95;  --cat-s: 28%; }
+  .card[data-cat="アート"]  { --cat-h: 245; --cat-s: 22%; }
+  .card[data-cat="グルメ"]  { --cat-h: 35;  --cat-s: 48%; }
+  .card[data-cat="マーケット"] { --cat-h: 22; --cat-s: 42%; }
+  .card[data-cat="展覧会"]  { --cat-h: 210; --cat-s: 20%; }
+  .card[data-cat="音楽"]    { --cat-h: 355; --cat-s: 32%; }
+
+  /* Place subtypes */
+  .card[data-cat="街区"]    { --cat-h: 28;  --cat-s: 35%; }
+  .card[data-cat="喫茶"]    { --cat-h: 22;  --cat-s: 40%; }
+  .card[data-cat="茶舗"]    { --cat-h: 88;  --cat-s: 25%; }
+  .card[data-cat="書店"]    { --cat-h: 215; --cat-s: 22%; }
+  .card[data-cat="寺社"]    { --cat-h: 95;  --cat-s: 25%; }
+  .card[data-cat="神社"]    { --cat-h: 95;  --cat-s: 25%; }
+  .card[data-cat="商店街"]  { --cat-h: 18;  --cat-s: 40%; }
+  .card[data-cat="散歩道"]  { --cat-h: 100; --cat-s: 22%; }
+
+  .card-image {
+    position: relative;
+    height: 160px;
+    overflow: hidden;
+    background:
+      linear-gradient(135deg,
+        hsl(var(--cat-h, 8), var(--cat-s, 50%), 62%) 0%,
+        hsl(var(--cat-h, 8), var(--cat-s, 50%), 38%) 100%);
+  }
+  .card-image-kanji {
+    position: absolute;
+    right: -14px;
+    bottom: -32px;
+    font-family: "Noto Serif JP", "Noto Serif SC", serif;
+    font-weight: 900;
+    font-size: 180px;
+    color: rgba(255, 255, 255, 0.18);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+  }
+  .card-image-grain {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0, transparent 1px),
+      radial-gradient(circle at 70% 60%, rgba(0,0,0,.06) 0, transparent 1px);
+    background-size: 6px 6px, 8px 8px;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+  .card-type-mark {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    font-family: "Noto Serif JP", serif;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(0, 0, 0, 0.25);
+    padding: 4px 10px;
+    border-radius: 2px;
+    backdrop-filter: blur(4px);
+    z-index: 2;
+  }
+
+  .card-fav {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(0, 0, 0, 0.18);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    z-index: 3;
+    transition: all var(--motion-fast);
+    backdrop-filter: blur(4px);
+  }
+  .card-fav:hover, .card-fav.active {
+    color: #fff;
+    background: var(--vermillion);
+  }
+
+  .card-body {
+    padding: 24px 26px 26px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  .card-meta-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .card-date {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--vermillion);
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .card-cat {
+    display: inline-block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.85;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-desc.no-clamp {
+    display: block;
+    -webkit-line-clamp: unset;
+  }
+  .card-loc {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-loc::before {
+    content: "";
+    width: 4px;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+  }
+
+  /* ============ Place Tip & Access ============ */
+  .place-tip {
+    background: var(--bg-tip);
+    border-left: 2px solid var(--vermillion);
+    padding: 12px 14px;
+    font-size: 12.5px;
+    color: var(--ink);
+    line-height: 1.85;
+    margin: 14px 0 0;
+    position: relative;
+  }
+  .place-tip::before {
+    content: "内行 TIP";
+    display: block;
+    font-family: "Noto Serif JP", serif;
+    font-size: 9.5px;
+    letter-spacing: 0.3em;
+    color: var(--vermillion);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .place-access {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 11px;
+  }
+  .place-access-label {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+    flex-shrink: 0;
+  }
+  .place-access-value {
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  /* Empty state */
+  .empty {
+    grid-column: 1 / -1;
+    background: var(--bg-card);
+    padding: 80px 32px;
+    text-align: center;
+    color: var(--ink-faint);
+    border: 1px solid var(--line);
+  }
+  .empty-kanji {
+    font-family: "Noto Serif JP", serif;
+    font-size: 56px;
+    color: var(--line);
+    margin-bottom: 12px;
+  }
+
+  /* ============== Modal ============== */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(43, 36, 24, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    perspective: var(--perspective-page);
+  }
+  .modal-backdrop.active { display: flex; }
+  .modal {
+    background: var(--bg-card);
+    max-width: 600px;
+    width: 100%;
+    max-height: 86vh;
+    overflow-y: auto;
+    padding: 48px 44px;
+    position: relative;
+    box-shadow: var(--shadow-lift);
+    transform-origin: center top;
+    animation: modal-open var(--motion-slow) var(--ease-paper);
+  }
+  @keyframes modal-open {
+    from { transform: rotateX(8deg) translateY(20px) scale(0.96); opacity: 0; }
+    to   { transform: rotateX(0) translateY(0) scale(1); opacity: 1; }
+  }
+  .modal-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    font-size: 24px;
+    color: var(--ink-faint);
+    line-height: 1;
+    width: 32px; height: 32px;
+  }
+  .modal-cat {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.22em;
+    color: var(--ink-faint); text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .modal-title {
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 32px;
+    line-height: 1.3;
+    margin-bottom: 24px;
+    letter-spacing: 0.02em;
+  }
+  .modal-meta {
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 20px 0;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 12px 16px;
+    font-size: 13px;
+  }
+  .modal-meta dt {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--ink-faint);
+    letter-spacing: 0.14em;
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+  .modal-meta dd { color: var(--ink); }
+  .modal-desc {
+    font-size: 15px; line-height: 2;
+    color: var(--ink); margin-bottom: 28px;
+  }
+  .modal-actions {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .btn {
+    padding: 12px 22px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    transition: all var(--motion-fast);
+  }
+  .btn:hover {
+    background: var(--ink); color: var(--bg);
+  }
+  .btn.primary {
+    background: var(--ink); color: var(--bg);
+  }
+  .btn.primary:hover {
+    background: var(--vermillion); border-color: var(--vermillion);
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 56px 32px 40px;
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    background: var(--bg-deep);
+  }
+  footer .accent { color: var(--vermillion); }
+  footer .footer-mark {
+    font-family: "Noto Serif JP", serif;
+    font-size: 18px;
+    letter-spacing: 0.4em;
+    color: var(--ink);
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: box-shadow var(--motion-fast) var(--ease-tilt) !important;
+    }
+    .scroll-indicator { animation: none; }
+  }
+</style>
+</head>
+<body data-tab="events">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-logo">YORO</span>
+      <span class="brand-tag">日本本地指南 · LOCAL JAPAN</span>
+    </div>
+    <div class="topbar-issue">
+      <span class="issue-jp">立夏</span>
+      <span class="issue-num">2026.05</span>
+    </div>
+  </div>
+</header>
+
+<section class="hero-story" id="heroStory">
+  <div class="hero-watermark" id="heroWatermark">祭</div>
+  <div class="hero-stamp">
+    <div class="hanko hanko-vertical hanko-large" id="heroHanko">今月</div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-eyebrow" id="heroEyebrow">SANJA · ASAKUSA · TOKYO</div>
+    <h1 class="hero-title" id="heroTitle">
+      百座神舆，<br/>
+      <span class="accent">初夏</span>的浅草。
+    </h1>
+    <p class="hero-lede" id="heroLede">东京最古老的祭典之一。每年初夏，约百座神舆涌入浅草街头，三天两夜。这不是给游客看的，是当地人最在意的一次。</p>
+    <div class="hero-meta" id="heroMeta">5月15日 – 17日<span class="dot">·</span>东京 · 浅草神社</div>
+    <a href="#" class="hero-cta" id="heroCta" target="_blank" rel="noopener">了解详情 →</a>
+  </div>
+  <div class="hero-jp-vertical" id="heroJpVertical">三社祭・浅草神社例大祭</div>
+  <div class="scroll-indicator">↓ 此刻全部</div>
+</section>
+
+<div class="filters-wrap">
+  <div class="filters-region" id="filterRegion">
+    <span class="filter-label">REGION · 地区</span>
+    <button class="pill active" data-region="all">全国 <span class="pill-count">—</span></button>
+    <button class="pill" data-region="kanto">关东 <span class="pill-count">—</span></button>
+    <button class="pill" data-region="kansai">关西 <span class="pill-count">—</span></button>
+    <button class="pill" data-region="chubu">中部 <span class="pill-count">—</span></button>
+    <button class="pill" data-region="hokkaido">北海道 <span class="pill-count">—</span></button>
+    <button class="pill" data-region="tohoku">东北 <span class="pill-count">—</span></button>
+    <button class="pill" data-region="chugoku">中国 <span class="pill-count">—</span></button>
+    <button class="pill" data-region="shikoku">四国 <span class="pill-count">—</span></button>
+    <button class="pill" data-region="kyushu">九州 <span class="pill-count">—</span></button>
+    <button class="pill" data-region="okinawa">冲绳 <span class="pill-count">—</span></button>
+  </div>
+
+  <section class="filters">
+    <div class="filter-group" data-filter-type="time" id="filterWhen">
+      <span class="filter-label">WHEN</span>
+      <button class="pill active" data-when="all">全部</button>
+      <button class="pill" data-when="weekend">本周末</button>
+      <button class="pill" data-when="month">本月</button>
+    </div>
+
+    <div class="filter-group" data-filter-type="cat" id="filterCat">
+      <span class="filter-label">WHAT</span>
+      <button class="pill active" data-cat="all">全部</button>
+      <button class="pill" data-cat="祭り">祭典</button>
+      <button class="pill" data-cat="自然">自然</button>
+      <button class="pill" data-cat="アート">艺术</button>
+      <button class="pill" data-cat="グルメ">美食</button>
+      <button class="pill" data-cat="マーケット">市集</button>
+    </div>
+
+    <div class="search-box">
+      <input id="search" type="text" placeholder="搜索..." />
+    </div>
+  </section>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="events">
+      <span class="tab-jp">此刻</span>
+      <span class="tab-en">NOW</span>
+      <span class="tab-count" id="tcEvents">—</span>
+    </button>
+    <button class="tab" data-tab="places">
+      <span class="tab-jp">常去</span>
+      <span class="tab-en">PLACES</span>
+      <span class="tab-count" id="tcPlaces">—</span>
+    </button>
+    <button class="tab" data-tab="favs">
+      <span class="tab-jp">收藏</span>
+      <span class="tab-en">SAVED</span>
+      <span class="tab-count" id="tcFavs">—</span>
+    </button>
+  </div>
+  <div class="tabs-jp-mark">本月精選 · MAY 2026</div>
+</div>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<footer>
+  <span class="footer-mark">養老</span>
+  <div>© YORO 2026 · 日本本地指南</div>
+  <div style="margin-top: 8px;">
+    <span class="accent">SEED DATA · v0.3</span>
+    <span style="margin: 0 12px;">·</span>
+    <span>UPDATED <span id="meta-updated">—</span></span>
+  </div>
+</footer>
+
+<script>
+const CAT_LABEL = {
+  "祭り": "祭典", "自然": "自然", "アート": "艺术",
+  "グルメ": "美食", "マーケット": "市集",
+  "展覧会": "展览", "音楽": "音乐"
+};
+
+const REGIONS = {
+  "東京": "kanto", "神奈川": "kanto", "埼玉": "kanto", "千葉": "kanto",
+  "茨城": "kanto", "栃木": "kanto", "群馬": "kanto",
+  "京都": "kansai", "大阪": "kansai", "兵庫": "kansai",
+  "奈良": "kansai", "和歌山": "kansai", "滋賀": "kansai",
+  "愛知": "chubu", "岐阜": "chubu", "静岡": "chubu", "山梨": "chubu",
+  "長野": "chubu", "新潟": "chubu", "富山": "chubu", "石川": "chubu", "福井": "chubu",
+  "青森": "tohoku", "岩手": "tohoku", "秋田": "tohoku",
+  "山形": "tohoku", "宮城": "tohoku", "福島": "tohoku",
+  "北海道": "hokkaido",
+  "鳥取": "chugoku", "島根": "chugoku", "岡山": "chugoku",
+  "広島": "chugoku", "山口": "chugoku",
+  "徳島": "shikoku", "香川": "shikoku", "愛媛": "shikoku", "高知": "shikoku",
+  "福岡": "kyushu", "佐賀": "kyushu", "長崎": "kyushu", "熊本": "kyushu",
+  "大分": "kyushu", "宮崎": "kyushu", "鹿児島": "kyushu",
+  "沖縄": "okinawa"
+};
+
+let state = {
+  events: [],
+  places: [],
+  filters: { when: "all", cat: "all", q: "", region: "all" },
+  tab: "events",
+  favs: new Set(JSON.parse(localStorage.getItem("yoro_favs") || "[]"))
+};
+
+const $ = (s, root = document) => root.querySelector(s);
+const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+function fmtDate(start, end) {
+  const s = new Date(start);
+  const e = new Date(end);
+  const fmt = d => `${d.getMonth() + 1}月${d.getDate()}日`;
+  if (start === end) return fmt(s);
+  if (s.getFullYear() !== e.getFullYear()) return `${s.getFullYear()}.${fmt(s)} – ${e.getFullYear()}.${fmt(e)}`;
+  return `${fmt(s)} – ${fmt(e)}`;
+}
+
+function isThisWeekend(ev) {
+  const today = new Date();
+  const day = today.getDay();
+  const sat = new Date(today); sat.setDate(today.getDate() + (6 - day));
+  const sun = new Date(sat); sun.setDate(sat.getDate() + 1);
+  const start = new Date(ev.date_start);
+  const end = new Date(ev.date_end);
+  return (start <= sun && end >= sat);
+}
+function isThisMonth(ev) {
+  const today = new Date();
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const start = new Date(ev.date_start);
+  const end = new Date(ev.date_end);
+  return (start <= monthEnd && end >= monthStart);
+}
+
+function getActiveItems() {
+  const f = state.filters;
+  let items = [];
+
+  if (state.tab === "events") {
+    items = state.events.filter(e => !e.hero);
+  } else if (state.tab === "places") {
+    items = state.places;
+  } else if (state.tab === "favs") {
+    const all = [...state.events.filter(e => !e.hero), ...state.places];
+    items = all.filter(item => state.favs.has(item.id));
+  }
+
+  return items.filter(item => {
+    if (f.region !== "all" && REGIONS[item.prefecture] !== f.region) return false;
+
+    if (f.q) {
+      const q = f.q.toLowerCase();
+      const blob = JSON.stringify(item).toLowerCase();
+      if (!blob.includes(q)) return false;
+    }
+
+    if (item.category !== "place") {
+      if (f.cat !== "all" && item.category !== f.cat) return false;
+      if (f.when === "weekend" && !isThisWeekend(item)) return false;
+      if (f.when === "month" && !isThisMonth(item)) return false;
+    }
+    return true;
+  }).sort((a, b) => {
+    if (a.date_start && b.date_start) return new Date(a.date_start) - new Date(b.date_start);
+    if (a.date_start) return -1;
+    if (b.date_start) return 1;
+    return 0;
+  });
+}
+
+function renderHero() {
+  const hero = state.events.find(e => e.hero);
+  if (!hero) return;
+  $("#heroWatermark").textContent = hero.kanji || "祭";
+  $("#heroEyebrow").textContent = `${hero.title_ja} · ${hero.city.toUpperCase()} · ${hero.prefecture.toUpperCase()}`;
+  $("#heroLede").textContent = hero.lede_zh || hero.description_zh;
+  $("#heroMeta").innerHTML = `${fmtDate(hero.date_start, hero.date_end)}<span class="dot">·</span>${hero.prefecture} · ${hero.venue}`;
+  $("#heroCta").href = hero.url || "#";
+  $("#heroJpVertical").textContent = `${hero.title_ja}・${hero.venue}`;
+  if (hero.season_tag) $("#heroHanko").textContent = hero.season_tag;
+}
+
+function renderEventCard(ev) {
+  const title = ev.title_zh || ev.title_ja;
+  const desc = ev.description_zh || ev.description_ja;
+  const isFav = state.favs.has(ev.id);
+  const catLabel = CAT_LABEL[ev.category] || ev.category;
+  const kanji = ev.kanji || catLabel.charAt(0);
+  const stamp = ev.season_tag
+    ? `<div class="hanko hanko-vertical hanko-corner">${ev.season_tag}</div>`
+    : "";
+  const imageStyle = ev.image_url
+    ? `style="background-image: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.35)), url('${ev.image_url}'); background-size: cover; background-position: center;"`
+    : "";
+  return `
+    <article class="card" data-id="${ev.id}" data-cat="${ev.category}" data-type="event">
+      <div class="card-image" ${imageStyle}>
+        <div class="card-image-grain"></div>
+        ${!ev.image_url ? `<span class="card-image-kanji">${kanji}</span>` : ""}
+        <button class="card-fav ${isFav ? "active" : ""}" data-fav="${ev.id}" aria-label="收藏">${isFav ? "♥" : "♡"}</button>
+        ${stamp}
+      </div>
+      <div class="card-body">
+        <div class="card-meta-row">
+          <div class="card-date">${fmtDate(ev.date_start, ev.date_end)}</div>
+        </div>
+        <div class="card-cat">${catLabel}</div>
+        <h2 class="card-title">${title}</h2>
+        <p class="card-desc">${desc}</p>
+        <div class="card-loc">${ev.prefecture} · ${ev.venue}</div>
+      </div>
+    </article>
+  `;
+}
+
+function renderPlaceCard(p) {
+  const isFav = state.favs.has(p.id);
+  const kanji = p.kanji || (p.subtype || "").charAt(0);
+  const subtype = p.subtype || "";
+  const imageStyle = p.image_url
+    ? `style="background-image: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.35)), url('${p.image_url}'); background-size: cover; background-position: center;"`
+    : "";
+  return `
+    <article class="card" data-id="${p.id}" data-cat="${subtype}" data-type="place">
+      <div class="card-image" ${imageStyle}>
+        <div class="card-image-grain"></div>
+        ${!p.image_url ? `<span class="card-image-kanji">${kanji}</span>` : ""}
+        <div class="card-type-mark">${subtype}</div>
+        <button class="card-fav ${isFav ? "active" : ""}" data-fav="${p.id}" aria-label="收藏">${isFav ? "♥" : "♡"}</button>
+      </div>
+      <div class="card-body">
+        <div class="card-cat">${p.prefecture} · ${p.city}</div>
+        <h2 class="card-title">${p.name_zh || p.name_ja}</h2>
+        <p class="card-desc no-clamp">${p.lede_zh}</p>
+        <div class="place-tip">${p.tip_zh}</div>
+        <div class="place-access">
+          <span class="place-access-label">ACCESS</span>
+          <span class="place-access-value">${p.access || ""}</span>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderCard(item) {
+  return item.category === "place" ? renderPlaceCard(item) : renderEventCard(item);
+}
+
+function render() {
+  const grid = $("#grid");
+  const list = getActiveItems();
+  const emptyMsg = state.tab === "favs" ? "还没有收藏的活动或地点" : "没有符合条件的内容";
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="empty"><div class="empty-kanji">空</div><div>${emptyMsg}</div></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(renderCard).join("");
+  attachCardInteractions();
+}
+
+function updateRegionCounts() {
+  const f = state.filters;
+  let pool;
+  if (state.tab === "events") pool = state.events.filter(e => !e.hero);
+  else if (state.tab === "places") pool = state.places;
+  else pool = [...state.events.filter(e => !e.hero), ...state.places].filter(i => state.favs.has(i.id));
+
+  const counts = { all: pool.length };
+  pool.forEach(item => {
+    const r = REGIONS[item.prefecture];
+    if (r) counts[r] = (counts[r] || 0) + 1;
+  });
+
+  $$("#filterRegion .pill").forEach(pill => {
+    const region = pill.dataset.region;
+    const n = counts[region] || 0;
+    const countEl = pill.querySelector(".pill-count");
+    if (countEl) countEl.textContent = n;
+    if (region !== "all") {
+      pill.style.display = n > 0 ? "" : "none";
+    }
+  });
+}
+
+function updateTabCounts() {
+  const evCount = state.events.filter(e => !e.hero).length;
+  const plCount = state.places.length;
+  const allItems = [...state.events.filter(e => !e.hero), ...state.places];
+  const favCount = allItems.filter(i => state.favs.has(i.id)).length;
+  $("#tcEvents").textContent = evCount;
+  $("#tcPlaces").textContent = plCount;
+  $("#tcFavs").textContent = favCount;
+}
+
+function setTab(tab) {
+  state.tab = tab;
+  document.body.dataset.tab = tab;
+  $$(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+  // Reset region filter to "all" when switching tabs
+  state.filters.region = "all";
+  $$("#filterRegion .pill").forEach(p => p.classList.toggle("active", p.dataset.region === "all"));
+  updateRegionCounts();
+  render();
+}
+
+function openModal(id) {
+  const ev = state.events.find(e => e.id === id);
+  const pl = state.places.find(p => p.id === id);
+  const item = ev || pl;
+  if (!item) return;
+  const mapQ = encodeURIComponent(`${item.venue} ${item.city} ${item.prefecture}`);
+
+  if (pl) {
+    const subtype = pl.subtype || "";
+    $("#modalContent").innerHTML = `
+      <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+      <div class="modal-cat">${subtype}</div>
+      <h2 class="modal-title">${pl.name_zh || pl.name_ja}</h2>
+      <dl class="modal-meta">
+        <dt>WHERE</dt><dd>${pl.venue}</dd>
+        <dt>AREA</dt><dd>${pl.prefecture} · ${pl.city}</dd>
+        <dt>ACCESS</dt><dd>${pl.access || "—"}</dd>
+      </dl>
+      <p class="modal-desc">${pl.lede_zh}</p>
+      <div class="place-tip" style="margin: 0 0 28px;">${pl.tip_zh}</div>
+      <div class="modal-actions">
+        ${pl.url ? `<a class="btn primary" href="${pl.url}" target="_blank" rel="noopener">前往官网 →</a>` : ""}
+        <a class="btn" href="https://www.google.com/maps/search/?api=1&query=${mapQ}" target="_blank" rel="noopener">地图查看</a>
+      </div>
+    `;
+  } else {
+    const catLabel = CAT_LABEL[ev.category] || ev.category;
+    $("#modalContent").innerHTML = `
+      <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+      <div class="modal-cat">${catLabel}</div>
+      <h2 class="modal-title">${ev.title_zh || ev.title_ja}</h2>
+      <dl class="modal-meta">
+        <dt>DATE</dt><dd>${fmtDate(ev.date_start, ev.date_end)}</dd>
+        <dt>VENUE</dt><dd>${ev.venue}</dd>
+        <dt>AREA</dt><dd>${ev.prefecture} · ${ev.city}</dd>
+      </dl>
+      <p class="modal-desc">${ev.description_zh || ev.description_ja}</p>
+      <div class="modal-actions">
+        ${ev.url ? `<a class="btn primary" href="${ev.url}" target="_blank" rel="noopener">前往官网 →</a>` : ""}
+        <a class="btn" href="https://www.google.com/maps/search/?api=1&query=${mapQ}" target="_blank" rel="noopener">地图查看</a>
+      </div>
+    `;
+  }
+  $("#modal").classList.add("active");
+  $("#modalClose").addEventListener("click", closeModal);
+}
+function closeModal() { $("#modal").classList.remove("active"); }
+
+/* ========== 3D Card Tilt ========== */
+function attachTilt(card) {
+  if (!finePointer || reduceMotion) return;
+  let raf = null;
+  const TILT = 6;
+  card.addEventListener("mousemove", e => {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      card.classList.add("tilting");
+      card.style.transform =
+        `perspective(1000px) rotateY(${x * TILT}deg) rotateX(${-y * TILT}deg) translateZ(6px)`;
+      card.style.setProperty("--shadow-x", `${-x * 24}px`);
+      card.style.setProperty("--shadow-y", `${12 + (-y * 18)}px`);
+    });
+  });
+  card.addEventListener("mouseleave", () => {
+    if (raf) cancelAnimationFrame(raf);
+    card.classList.remove("tilting");
+    card.style.transform = "";
+    card.style.setProperty("--shadow-x", "0px");
+    card.style.setProperty("--shadow-y", "4px");
+  });
+}
+
+/* ========== Scroll Reveal ========== */
+let scrollObserver = null;
+function ensureObserver() {
+  if (scrollObserver || reduceMotion) return scrollObserver;
+  scrollObserver = new IntersectionObserver(entries => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add("revealed"), i * 60);
+        scrollObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" });
+  return scrollObserver;
+}
+
+function attachCardInteractions() {
+  const cards = $$(".card");
+  const obs = ensureObserver();
+  cards.forEach(card => {
+    if (reduceMotion) {
+      card.classList.add("revealed");
+    } else if (obs) {
+      obs.observe(card);
+    } else {
+      card.classList.add("revealed");
+    }
+    attachTilt(card);
+  });
+}
+
+function attachHeroParallax() {
+  if (reduceMotion) return;
+  const wm = $("#heroWatermark");
+  if (!wm) return;
+  window.addEventListener("scroll", () => {
+    const y = window.scrollY;
+    if (y > window.innerHeight) return;
+    wm.style.transform = `translateY(calc(-50% + ${y * 0.12}px))`;
+  }, { passive: true });
+}
+
+function bindEvents() {
+  $$(".filter-group").forEach(group => {
+    group.addEventListener("click", e => {
+      const b = e.target.closest(".pill");
+      if (!b) return;
+      const key = b.dataset.when ? "when" : "cat";
+      const val = b.dataset.when || b.dataset.cat;
+      state.filters[key] = val;
+      $$(".pill", group).forEach(p => p.classList.toggle("active", p === b));
+      render();
+    });
+  });
+
+  $("#filterRegion").addEventListener("click", e => {
+    const b = e.target.closest(".pill");
+    if (!b) return;
+    state.filters.region = b.dataset.region;
+    $$("#filterRegion .pill").forEach(p => p.classList.toggle("active", p === b));
+    render();
+  });
+
+  $("#tabs").addEventListener("click", e => {
+    const t = e.target.closest(".tab");
+    if (!t) return;
+    setTab(t.dataset.tab);
+  });
+
+  $("#search").addEventListener("input", e => {
+    state.filters.q = e.target.value;
+    render();
+  });
+
+  $("#grid").addEventListener("click", e => {
+    const fav = e.target.closest("[data-fav]");
+    if (fav) {
+      e.stopPropagation();
+      const id = fav.dataset.fav;
+      if (state.favs.has(id)) state.favs.delete(id); else state.favs.add(id);
+      localStorage.setItem("yoro_favs", JSON.stringify([...state.favs]));
+      updateTabCounts();
+      render();
+      return;
+    }
+    const card = e.target.closest(".card");
+    if (card) openModal(card.dataset.id);
+  });
+
+  $("#modal").addEventListener("click", e => {
+    if (e.target.id === "modal") closeModal();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeModal();
+  });
+}
+
+async function loadJSON(path) {
+  try {
+    const res = await fetch(path);
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to load", path, err);
+    return null;
+  }
+}
+
+async function init() {
+  bindEvents();
+  attachHeroParallax();
+  const [ev, pl] = await Promise.all([
+    loadJSON("data/events.json"),
+    loadJSON("data/places.json")
+  ]);
+  state.events = (ev && ev.events) || [];
+  state.places = (pl && pl.places) || [];
+  window.__YORO_UPDATED__ = (ev && ev.updated_at) || "—";
+  $("#meta-updated").textContent = window.__YORO_UPDATED__;
+
+  renderHero();
+  updateTabCounts();
+  updateRegionCounts();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
