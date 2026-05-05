@@ -2500,6 +2500,16 @@ function isManual(item) {
   return !item.source || item.source === "manual";
 }
 
+// Events lasting more than 30 days are treated as "long-running" and
+// pushed back in the sort — short, time-limited events feel more
+// urgent and deserve top billing.
+const LONG_DURATION_DAYS = 30;
+function isLongRunning(item) {
+  if (!item.date_start || !item.date_end) return false;
+  const days = (new Date(item.date_end) - new Date(item.date_start)) / 86400000;
+  return days > LONG_DURATION_DAYS;
+}
+
 function getActiveItems() {
   const f = state.filters;
   let items = [];
@@ -2530,11 +2540,15 @@ function getActiveItems() {
     }
     return true;
   }).sort((a, b) => {
-    // Manual / curated picks always first
+    // 1. Manual / curated picks always first
     const am = isManual(a) ? 0 : 1;
     const bm = isManual(b) ? 0 : 1;
     if (am !== bm) return am - bm;
-    // Then by date
+    // 2. Long-running events pushed to back (>30 days = "evergreen")
+    const aLong = isLongRunning(a) ? 1 : 0;
+    const bLong = isLongRunning(b) ? 1 : 0;
+    if (aLong !== bLong) return aLong - bLong;
+    // 3. Within tier: by date_start ascending
     if (a.date_start && b.date_start) return new Date(a.date_start) - new Date(b.date_start);
     if (a.date_start) return -1;
     if (b.date_start) return 1;
