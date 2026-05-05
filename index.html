@@ -2910,12 +2910,12 @@ function render() {
 
 const SECTIONS = [
   { key: 'featured', kanji: '特', zh: '本期特集',          en: 'FEATURED',         layout: 'spread', match: e => e.featured },
+  { key: 'nature',   kanji: '緑', zh: '自然',              en: 'NATURE',           layout: 'photo',  match: e => e.category === '自然' },
+  { key: 'food',     kanji: '食', zh: 'グルメ · 市集',      en: 'FOOD & MARKETS',   layout: 'photo',  match: e => e.category === 'グルメ' || e.category === 'マーケット' },
   { key: 'matsuri',  kanji: '祭', zh: '祭典',              en: 'FESTIVALS',        layout: 'photo',  match: e => e.category === '祭り' },
   { key: 'live',     kanji: '響', zh: '演出',              en: 'LIVE & STAGE',     layout: 'photo',  match: e => e.category === '音楽' },
-  { key: 'sports',   kanji: '競', zh: '体育',              en: 'SPORTS',           layout: 'list',   match: e => e.category === 'スポーツ' },
-  { key: 'nature',   kanji: '緑', zh: '自然',              en: 'NATURE',           layout: 'photo',  match: e => e.category === '自然' },
   { key: 'art',      kanji: '藝', zh: '展覧 · 美術',        en: 'EXHIBITIONS',      layout: 'list',   match: e => e.category === 'アート' || e.category === '展覧会' },
-  { key: 'food',     kanji: '食', zh: 'グルメ · 市集',      en: 'FOOD & MARKETS',   layout: 'photo',  match: e => e.category === 'グルメ' || e.category === 'マーケット' },
+  { key: 'sports',   kanji: '競', zh: '体育',              en: 'SPORTS',           layout: 'list',   match: e => e.category === 'スポーツ' },
   { key: 'other',    kanji: '般', zh: 'その他',            en: 'MORE',             layout: 'compact-list', match: () => true },
 ];
 
