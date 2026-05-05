@@ -654,41 +654,63 @@ def fetch_ticketmaster():
     }
 
     seg_counts = collections.Counter()
+    skip_reasons = collections.Counter()
     out = []
-    for ev in events:
+    for i, ev in enumerate(events):
         classifications = ev.get("classifications") or []
         seg_name = ""
         if classifications:
             seg_name = (classifications[0].get("segment") or {}).get("name", "") or ""
         cat, kanji = SEGMENT_MAP.get(seg_name.lower(), ("音楽", "響"))
-        mapped = parse_ticketmaster_event(ev, cat, kanji)
+
+        mapped, reason = parse_ticketmaster_event(ev, cat, kanji)
         if mapped:
             out.append(mapped)
             seg_counts[seg_name or "unknown"] += 1
+        else:
+            skip_reasons[reason] += 1
+            if i < 2:
+                # Log first 2 skipped events with key fields for diagnosis
+                ev_name = (ev.get("name") or "")[:40]
+                dates = ev.get("dates") or {}
+                start_d = (dates.get("start") or {})
+                venues = (ev.get("_embedded") or {}).get("venues") or []
+                v0 = venues[0] if venues else {}
+                cc = ((v0.get("country") or {}).get("countryCode") or "")
+                print(f"  [ticketmaster skip] reason={reason} name={ev_name!r} "
+                      f"localDate={start_d.get('localDate')!r} "
+                      f"dateTBD={start_d.get('dateTBD')} "
+                      f"cc={cc!r}", file=sys.stderr)
 
     if seg_counts:
         breakdown = ", ".join(f"{s}={n}" for s, n in seg_counts.most_common())
         print(f"  [ticketmaster] segments: {breakdown}")
+    if skip_reasons:
+        skip_summary = ", ".join(f"{r}={n}" for r, n in skip_reasons.most_common())
+        print(f"  [ticketmaster] skipped: {skip_summary}")
 
     return out
 
 
 def parse_ticketmaster_event(ev, cat, kanji):
+    """Returns (event_dict, None) on success, (None, reason) on rejection."""
     name = (ev.get("name") or "").strip()
     if not name:
-        return None
+        return None, "no_name"
 
     dates = ev.get("dates") or {}
-    start = (dates.get("start") or {}).get("localDate") or ""
+    start_obj = dates.get("start") or {}
+    start = (start_obj.get("localDate") or
+             (start_obj.get("dateTime") or "")[:10] or "")
     if not start:
-        return None
+        return None, "no_start_date"
     end = (dates.get("end") or {}).get("localDate") or start
 
     venues = (ev.get("_embedded") or {}).get("venues") or []
     venue = venues[0] if venues else {}
     cc = ((venue.get("country") or {}).get("countryCode") or "").upper()
     if cc and cc != "JP":
-        return None
+        return None, "wrong_country"
 
     venue_name = venue.get("name", "") or ""
     city = (venue.get("city") or {}).get("name", "") or ""
@@ -708,7 +730,7 @@ def parse_ticketmaster_event(ev, cat, kanji):
     if not desc:
         desc = f"{name} · live in Japan"
 
-    return {
+    return ({
         "id": f"tm-{ev.get('id') or stable_id('tm', name, start)}",
         "title_ja": name,
         "title_zh": name,
@@ -725,7 +747,7 @@ def parse_ticketmaster_event(ev, cat, kanji):
         "image_url": image,
         "featured": False,
         "source": "ticketmaster",
-    }
+    }, None)
 
 
 # Add new sources here. Each is (name, fetch_function).
