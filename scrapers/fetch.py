@@ -671,7 +671,13 @@ def fetch_ticketmaster():
         "weightlifting", "triathlon", "fencing", "archery",
         "gymnastics", "sepak", "sailing", "rowing", "canoe",
         "cycling", "diving", "taekwondo", "baseball",
+        "pentathlon", "cricket", "handball", "kabaddi", "wushu",
+        "softball", "billiards", "bowling", "ju-jitsu",
+        "esport", "polo", "lawn bowls",
     )
+
+    # Asian Games / Olympic-style event code pattern: "Basketball - BKB01"
+    GAMES_PATTERN = re.compile(r'^[A-Za-z\s\-/&]+ - [A-Z]{2,4}\d+$')
 
     def classify(seg_name, name, classifications):
         # 1. Direct segment match
@@ -682,11 +688,14 @@ def fetch_ticketmaster():
             genre = ((classifications[0].get("genre") or {}).get("name") or "").lower()
             if genre and genre != "undefined" and genre in SEGMENT_MAP:
                 return SEGMENT_MAP[genre]
-        # 3. Keyword on event name (handles Asian Games "Basketball - BKB01")
+        # 3. Asian Games / Olympic naming pattern
+        if GAMES_PATTERN.match((name or "").strip()):
+            return "スポーツ", "競"
+        # 4. English sport keywords
         nl = (name or "").lower()
         if any(w in nl for w in SPORT_WORDS_EN):
             return "スポーツ", "競"
-        # 4. Default
+        # 5. Default to music
         return "音楽", "響"
 
     seg_counts = collections.Counter()
@@ -751,12 +760,19 @@ def parse_ticketmaster_event(ev, cat, kanji):
     venue_name = (venue.get("name") or "").strip()
     city = ((venue.get("city") or {}).get("name") or "").strip()
     state = ((venue.get("state") or {}).get("name") or "").strip()
-    prefecture = (
-        BIT_PREF_MAP.get(state)
-        or CITY_TO_PREF.get(city)
-        or guess_prefecture(state + " " + city + " " + venue_name)
-        or "東京"
-    )
+
+    # Prefecture detection: check direct keys, then substring search in venue
+    # name (Ticketmaster sometimes only encodes location in venue name like
+    # "Aichi International Arena" with no state/city set)
+    prefecture = BIT_PREF_MAP.get(state) or CITY_TO_PREF.get(city)
+    if not prefecture:
+        location_text = f"{state} {city} {venue_name}"
+        for eng, jp in {**BIT_PREF_MAP, **CITY_TO_PREF}.items():
+            if eng in location_text:
+                prefecture = jp
+                break
+    if not prefecture:
+        prefecture = guess_prefecture(state + " " + city + " " + venue_name) or "東京"
 
     # Best image: prefer largest by area, ratio 16_9 first
     images = ev.get("images") or []
