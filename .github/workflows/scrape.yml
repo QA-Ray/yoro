@@ -24,6 +24,8 @@ jobs:
         run: pip install -r scrapers/requirements.txt
 
       - name: Run scrapers
+        env:
+          MYMEMORY_EMAIL: ${{ secrets.MYMEMORY_EMAIL }}
         run: python scrapers/fetch.py
 
       - name: Commit if data changed
