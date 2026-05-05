@@ -327,7 +327,10 @@
   /* Hero prev/next arrows (desktop only) */
   .hero-arrow {
     position: absolute;
-    top: 50%;
+    /* Center within the visible content band — compensate for the dots
+       row (~56px from bottom) + scroll-indicator (~28px from bottom)
+       which weight the visual center upward by ~32px */
+    top: calc(50% - 32px);
     transform: translateY(-50%);
     width: 44px;
     height: 44px;
