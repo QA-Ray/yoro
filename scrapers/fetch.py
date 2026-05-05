@@ -99,6 +99,106 @@ def filter_future(events):
     ]
 
 
+# ============== Translation (MyMemory, no API key) ==============
+
+TRANSLATIONS_CACHE_FILE = DATA / "translations_cache.json"
+_TRANS_CACHE = None
+_TRANS_SESSION = None
+_TRANS_FAILED = False
+
+
+def _load_trans():
+    global _TRANS_CACHE
+    if _TRANS_CACHE is None:
+        if TRANSLATIONS_CACHE_FILE.exists():
+            try:
+                _TRANS_CACHE = json.loads(
+                    TRANSLATIONS_CACHE_FILE.read_text(encoding="utf-8")
+                )
+            except Exception:
+                _TRANS_CACHE = {}
+        else:
+            _TRANS_CACHE = {}
+    return _TRANS_CACHE
+
+
+def _save_trans():
+    if _TRANS_CACHE is None:
+        return
+    TRANSLATIONS_CACHE_FILE.write_text(
+        json.dumps(_TRANS_CACHE, ensure_ascii=False, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+
+_BAD_TRANS_MARKERS = (
+    "QUERY LENGTH LIMIT",
+    "PLEASE SELECT TWO DISTINCT",
+    "MYMEMORY WARNING",
+    "INVALID LANGUAGE PAIR",
+    "INVALID EMAIL",
+)
+
+
+def translate_ja_to_zh(text):
+    """Japanese → Simplified Chinese via MyMemory free tier.
+
+    Caches results to data/translations_cache.json. Returns original text
+    on any failure (rate limit, network, junk response). Set MYMEMORY_EMAIL
+    env var to bump free quota from 1k → 100k chars/day.
+    """
+    import os
+    global _TRANS_SESSION, _TRANS_FAILED
+
+    if not text or not text.strip():
+        return text
+    cache = _load_trans()
+    if text in cache:
+        return cache[text]
+    if _TRANS_FAILED:
+        return text  # don't keep hammering after rate limit
+
+    if _TRANS_SESSION is None:
+        _TRANS_SESSION = requests.Session()
+
+    email = os.environ.get("MYMEMORY_EMAIL", "").strip()
+    params = {"q": text[:500], "langpair": "ja|zh-CN"}
+    if email:
+        params["de"] = email
+
+    try:
+        r = _TRANS_SESSION.get(
+            "https://api.mymemory.translated.net/get",
+            params=params,
+            timeout=8,
+            headers={"User-Agent": "YoroBot/0.1 (+https://github.com/QA-Ray/yoro)"},
+        )
+        if r.status_code == 429 or r.status_code == 403:
+            _TRANS_FAILED = True
+            print(f"  [translate] rate limited (HTTP {r.status_code}); "
+                  f"remaining translations skipped this run", file=sys.stderr)
+            return text
+        r.raise_for_status()
+        data = r.json()
+        status = str(data.get("responseStatus", ""))
+        translated = (data.get("responseData", {}).get("translatedText") or "").strip()
+
+        if status == "200" and translated:
+            up = translated.upper()
+            if any(m in up for m in _BAD_TRANS_MARKERS):
+                return text
+            if translated.upper() == text.upper():
+                # No actual translation; cache as-is to avoid retrying
+                cache[text] = text
+                return text
+            cache[text] = translated
+            return translated
+    except Exception as e:
+        print(f"  [translate] {type(e).__name__}: {e}", file=sys.stderr)
+
+    return text
+
+
 # ============== Sources ==============
 
 def fetch_connpass():
@@ -240,10 +340,13 @@ def parse_walkerplus_event(d, prefecture):
 
     cat, kanji = guess_cat_kanji(name, desc)
 
+    title_zh = translate_ja_to_zh(name)
+    desc_zh = translate_ja_to_zh(desc_short)
+
     return {
         "id": stable_id("wp", event_url, name, start),
         "title_ja": name,
-        "title_zh": name,
+        "title_zh": title_zh,
         "category": cat,
         "kanji": kanji,
         "date_start": start,
@@ -252,7 +355,7 @@ def parse_walkerplus_event(d, prefecture):
         "city": city,
         "venue": venue,
         "description_ja": desc_short,
-        "description_zh": desc_short,
+        "description_zh": desc_zh,
         "url": event_url,
         "image_url": image,
         "featured": False,
@@ -310,10 +413,13 @@ def run():
         json.dumps(output, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    _save_trans()
+    cache_size = len(_TRANS_CACHE) if _TRANS_CACHE else 0
     print(
         f"\n→ {out_path.relative_to(ROOT)}: {len(final)} events "
         f"({len(curated_events)} curated + {len(deduped)} scraped)"
     )
+    print(f"→ translations cache: {cache_size} entries")
 
 
 if __name__ == "__main__":

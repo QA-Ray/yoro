@@ -6,7 +6,7 @@
 <title>YORO · 日本本地指南</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;900&family=Noto+Serif+JP:wght@400;600;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;900&family=Noto+Serif+JP:wght@400;600;900&family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
 <style>
   :root {
     /* Palette · 和纸墨色 */
@@ -51,17 +51,45 @@
     line-height: 1.8;
     -webkit-font-smoothing: antialiased;
     -webkit-text-size-adjust: 100%;
+    /* subtle paper noise */
+    background-image:
+      radial-gradient(circle at 25% 25%, rgba(150, 122, 79, 0.025) 0, transparent 40%),
+      radial-gradient(circle at 75% 75%, rgba(168, 54, 42, 0.018) 0, transparent 40%);
   }
   a { color: var(--ink); text-decoration: none; }
   button { font-family: inherit; cursor: pointer; background: none; border: none; color: inherit; padding: 0; }
   ::selection { background: var(--vermillion); color: var(--paper-white); }
+
+  /* ============== Page Spine (right-edge magazine accent) ============== */
+  .spine {
+    position: fixed;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%) rotate(180deg);
+    transform-origin: center;
+    writing-mode: vertical-rl;
+    z-index: 30;
+    pointer-events: none;
+    user-select: none;
+    font-family: "Noto Serif JP", serif;
+    font-size: 10px;
+    letter-spacing: 0.5em;
+    color: var(--ink-faint);
+    opacity: 0.55;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  .spine .dot { color: var(--vermillion); }
+  @media (max-width: 1100px) { .spine { display: none; } }
 
   /* ============== Topbar ============== */
   .topbar {
     border-bottom: 1px solid var(--line);
     position: sticky; top: 0; z-index: 50;
     backdrop-filter: saturate(120%) blur(10px);
-    background: rgba(245, 241, 232, 0.9);
+    background: rgba(245, 241, 232, 0.92);
   }
   .topbar-inner {
     max-width: 1200px;
@@ -142,12 +170,6 @@
     height: 76px;
     font-size: 20px;
     transform: rotate(-4deg);
-  }
-  .hanko-small {
-    padding: 5px 9px;
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    transform: rotate(-2deg);
   }
   .hanko-corner {
     position: absolute;
@@ -253,7 +275,7 @@
   .hero-jp-vertical {
     position: absolute;
     bottom: 48px;
-    right: 48px;
+    right: 88px;
     font-family: "Noto Serif JP", serif;
     font-size: 12px;
     letter-spacing: 0.4em;
@@ -278,6 +300,73 @@
   @keyframes bob {
     0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
     50% { transform: translateX(-50%) translateY(6px); opacity: 1; }
+  }
+
+  /* ============== Season Strip ============== */
+  .season-strip {
+    max-width: 1200px;
+    margin: 64px auto 0;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 28px;
+    align-items: center;
+  }
+  .season-kanji {
+    display: flex;
+    gap: 6px;
+  }
+  .season-kanji span {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--ink);
+    background: linear-gradient(180deg, var(--ink) 0%, var(--ink) 60%, var(--vermillion) 60%, var(--vermillion) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .season-rule {
+    height: 1px;
+    background: var(--line);
+    position: relative;
+  }
+  .season-rule::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 28px;
+    height: 1px;
+    background: var(--vermillion);
+    transform: translateY(-50%);
+  }
+  .season-text {
+    text-align: right;
+  }
+  .season-text-zh {
+    font-family: "Noto Serif SC", serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .season-text-meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .season-fl {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 36px;
+    color: var(--vermillion);
+    line-height: 1;
+    opacity: 0.5;
   }
 
   /* ============== Region Row ============== */
@@ -365,8 +454,6 @@
     font-size: 16px;
     pointer-events: none;
   }
-
-  /* Hide event-only filters when on places tab */
   body[data-tab="places"] [data-filter-type="time"],
   body[data-tab="places"] [data-filter-type="cat"] {
     display: none;
@@ -438,22 +525,42 @@
     color: var(--ink-faint);
   }
 
-  /* ============== Event Grid ============== */
+  /* ============== Magazine Grid ============== */
   .grid {
     max-width: 1200px;
     margin: 0 auto;
     padding: 28px 32px 96px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 380px;
+    grid-auto-flow: dense;
     gap: 20px;
     perspective: var(--perspective-card);
   }
+
+  /* Card sizes — magazine asymmetry */
+  .card.size-big {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  .card.size-wide {
+    grid-column: span 2;
+    flex-direction: row;
+  }
+
   @media (max-width: 900px) {
-    .grid { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 360px; }
+    .card.size-big { grid-column: span 2; grid-row: span 2; }
+    .card.size-wide { grid-column: span 2; flex-direction: row; }
     .tabs-jp-mark { display: none; }
   }
   @media (max-width: 600px) {
-    .grid { grid-template-columns: 1fr; padding: 20px 20px 72px; }
+    .grid { grid-template-columns: 1fr; grid-auto-rows: minmax(380px, auto); padding: 20px 20px 72px; }
+    .card.size-big, .card.size-wide {
+      grid-column: span 1;
+      grid-row: auto;
+      flex-direction: column;
+    }
     .topbar-inner { padding: 14px 20px; }
     .hero-story { padding: 80px 20px 80px; min-height: 72vh; }
     .hero-content { margin-left: 0; }
@@ -466,6 +573,9 @@
     .tabs-wrap { padding: 0 20px; margin-top: 32px; }
     .tab { padding: 14px 18px 12px; }
     .tab-jp { font-size: 16px; }
+    .season-strip { grid-template-columns: auto 1fr; padding: 0 20px; gap: 16px; }
+    .season-fl, .season-text { display: none; }
+    .season-kanji span { font-size: 36px; }
   }
 
   .card {
@@ -481,6 +591,7 @@
     transform-style: preserve-3d;
     opacity: 0;
     transform: translateY(28px);
+    overflow: hidden;
   }
   .card.revealed {
     opacity: 1;
@@ -491,6 +602,24 @@
   }
   .card.tilting {
     box-shadow: var(--shadow-x, 0) var(--shadow-y, 12px) 36px -10px rgba(43, 36, 24, 0.22);
+  }
+
+  /* Editorial badge for manual/featured editorial picks */
+  .card-editorial-mark {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(43, 36, 24, 0.4);
+    padding: 4px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 4;
+    backdrop-filter: blur(6px);
+    text-transform: uppercase;
   }
 
   /* Event categories */
@@ -514,12 +643,26 @@
 
   .card-image {
     position: relative;
+    flex-shrink: 0;
     height: 160px;
     overflow: hidden;
     background:
       linear-gradient(135deg,
         hsl(var(--cat-h, 8), var(--cat-s, 50%), 62%) 0%,
         hsl(var(--cat-h, 8), var(--cat-s, 50%), 38%) 100%);
+  }
+  .card.size-big .card-image { height: 320px; }
+  .card.size-wide .card-image {
+    height: 100%;
+    width: 50%;
+    flex-shrink: 0;
+  }
+  .card-image-photo {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-image: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.42)), var(--bg-photo);
   }
   .card-image-kanji {
     position: absolute;
@@ -533,6 +676,7 @@
     user-select: none;
     pointer-events: none;
   }
+  .card.size-big .card-image-kanji { font-size: 320px; bottom: -60px; right: -30px; }
   .card-image-grain {
     position: absolute; inset: 0;
     background-image:
@@ -574,13 +718,18 @@
     color: #fff;
     background: var(--vermillion);
   }
+  .card.has-editorial .card-fav { right: auto; left: 12px; }
 
   .card-body {
     padding: 24px 26px 26px;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    overflow: hidden;
   }
+  .card.size-big .card-body { padding: 36px 36px 32px; }
+  .card.size-wide .card-body { padding: 32px 32px 28px; flex: 1; }
+
   .card-meta-row {
     display: flex;
     align-items: baseline;
@@ -594,6 +743,7 @@
     letter-spacing: 0.06em;
     font-weight: 500;
   }
+  .card.size-big .card-date { font-size: 13px; }
   .card-cat {
     display: inline-block;
     font-family: "JetBrains Mono", monospace;
@@ -608,10 +758,24 @@
     font-weight: 600;
     font-size: 22px;
     line-height: 1.4;
-    margin-bottom: 12px;
     color: var(--ink);
     letter-spacing: 0.02em;
+    margin-bottom: 4px;
   }
+  .card.size-big .card-title { font-size: 32px; line-height: 1.25; margin-bottom: 6px; }
+  .card.size-wide .card-title { font-size: 26px; line-height: 1.3; }
+
+  .card-title-ja {
+    font-family: "Noto Serif JP", serif;
+    font-size: 11.5px;
+    font-weight: 400;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .card.size-big .card-title-ja { font-size: 13px; margin-bottom: 16px; }
+
   .card-desc {
     font-size: 13px;
     color: var(--ink-soft);
@@ -621,6 +785,21 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  .card.size-big .card-desc {
+    font-size: 14.5px;
+    line-height: 1.95;
+    -webkit-line-clamp: 5;
+  }
+  .card.size-big .card-desc::first-letter {
+    font-family: "Noto Serif SC", serif;
+    font-size: 2.4em;
+    font-weight: 600;
+    float: left;
+    line-height: 0.95;
+    margin: 6px 8px 0 0;
+    color: var(--vermillion);
+  }
+  .card.size-wide .card-desc { -webkit-line-clamp: 4; }
   .card-desc.no-clamp {
     display: block;
     -webkit-line-clamp: unset;
@@ -644,7 +823,7 @@
     border-radius: 50%;
   }
 
-  /* ============ Place Tip & Access ============ */
+  /* Place tip & access */
   .place-tip {
     background: var(--bg-tip);
     border-left: 2px solid var(--vermillion);
@@ -688,6 +867,7 @@
   /* Empty state */
   .empty {
     grid-column: 1 / -1;
+    grid-row: span 1;
     background: var(--bg-card);
     padding: 80px 32px;
     text-align: center;
@@ -749,8 +929,15 @@
     font-weight: 900;
     font-size: 32px;
     line-height: 1.3;
-    margin-bottom: 24px;
+    margin-bottom: 6px;
     letter-spacing: 0.02em;
+  }
+  .modal-title-ja {
+    font-family: "Noto Serif JP", serif;
+    font-size: 13px;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    margin-bottom: 24px;
   }
   .modal-meta {
     border-top: 1px solid var(--line);
@@ -785,15 +972,9 @@
     color: var(--ink);
     transition: all var(--motion-fast);
   }
-  .btn:hover {
-    background: var(--ink); color: var(--bg);
-  }
-  .btn.primary {
-    background: var(--ink); color: var(--bg);
-  }
-  .btn.primary:hover {
-    background: var(--vermillion); border-color: var(--vermillion);
-  }
+  .btn:hover { background: var(--ink); color: var(--bg); }
+  .btn.primary { background: var(--ink); color: var(--bg); }
+  .btn.primary:hover { background: var(--vermillion); border-color: var(--vermillion); }
 
   /* Footer */
   footer {
@@ -827,6 +1008,16 @@
 </head>
 <body data-tab="events">
 
+<div class="spine">
+  <span>YORO</span>
+  <span class="dot">·</span>
+  <span>立夏 RIKKA</span>
+  <span class="dot">·</span>
+  <span>MAY 2026</span>
+  <span class="dot">·</span>
+  <span>第五号</span>
+</div>
+
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
@@ -859,7 +1050,17 @@
   <div class="scroll-indicator">↓ 此刻全部</div>
 </section>
 
-<div class="filters-wrap">
+<aside class="season-strip">
+  <div class="season-kanji"><span>立</span><span>夏</span></div>
+  <div class="season-rule"></div>
+  <div class="season-text">
+    <div class="season-text-zh">青もみじと祭の季節</div>
+    <div class="season-text-meta">RIKKA · BEGINNING OF SUMMER · MAY 5</div>
+  </div>
+  <div class="season-fl">No. 05</div>
+</aside>
+
+<div class="filters-wrap" style="margin-top: 32px;">
   <div class="filters-region" id="filterRegion">
     <span class="filter-label">REGION · 地区</span>
     <button class="pill active" data-region="all">全国 <span class="pill-count">—</span></button>
@@ -890,6 +1091,7 @@
       <button class="pill" data-cat="アート">艺术</button>
       <button class="pill" data-cat="グルメ">美食</button>
       <button class="pill" data-cat="マーケット">市集</button>
+      <button class="pill" data-cat="展覧会">展览</button>
     </div>
 
     <div class="search-box">
@@ -931,7 +1133,7 @@
   <span class="footer-mark">養老</span>
   <div>© YORO 2026 · 日本本地指南</div>
   <div style="margin-top: 8px;">
-    <span class="accent">SEED DATA · v0.3</span>
+    <span class="accent">SEED DATA · v0.4</span>
     <span style="margin: 0 12px;">·</span>
     <span>UPDATED <span id="meta-updated">—</span></span>
   </div>
@@ -1002,6 +1204,10 @@ function isThisMonth(ev) {
   return (start <= monthEnd && end >= monthStart);
 }
 
+function isManual(item) {
+  return !item.source || item.source === "manual";
+}
+
 function getActiveItems() {
   const f = state.filters;
   let items = [];
@@ -1031,11 +1237,24 @@ function getActiveItems() {
     }
     return true;
   }).sort((a, b) => {
+    // Manual / curated picks always first
+    const am = isManual(a) ? 0 : 1;
+    const bm = isManual(b) ? 0 : 1;
+    if (am !== bm) return am - bm;
+    // Then by date
     if (a.date_start && b.date_start) return new Date(a.date_start) - new Date(b.date_start);
     if (a.date_start) return -1;
     if (b.date_start) return 1;
     return 0;
   });
+}
+
+function pickCardSize(item, idx) {
+  // First card: hero treatment if it has a photo or is editorial
+  if (idx === 0 && (item.image_url || isManual(item))) return "size-big";
+  // Every 7th card after first: wide treatment
+  if (idx > 0 && idx % 7 === 0) return "size-wide";
+  return "";
 }
 
 function renderHero() {
@@ -1050,8 +1269,17 @@ function renderHero() {
   if (hero.season_tag) $("#heroHanko").textContent = hero.season_tag;
 }
 
-function renderEventCard(ev) {
-  const title = ev.title_zh || ev.title_ja;
+function dualTitle(zh, ja) {
+  // Show JA subtitle only if it's meaningfully different from ZH
+  const same = !ja || ja === zh || ja.trim() === zh.trim();
+  return {
+    main: zh || ja || "",
+    sub: same ? "" : ja
+  };
+}
+
+function renderEventCard(ev, sizeClass) {
+  const titles = dualTitle(ev.title_zh, ev.title_ja);
   const desc = ev.description_zh || ev.description_ja;
   const isFav = state.favs.has(ev.id);
   const catLabel = CAT_LABEL[ev.category] || ev.category;
@@ -1059,40 +1287,47 @@ function renderEventCard(ev) {
   const stamp = ev.season_tag
     ? `<div class="hanko hanko-vertical hanko-corner">${ev.season_tag}</div>`
     : "";
-  const imageStyle = ev.image_url
-    ? `style="background-image: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.35)), url('${ev.image_url}'); background-size: cover; background-position: center;"`
+  const editorialMark = isManual(ev) ? `<div class="card-editorial-mark">Editor's Pick</div>` : "";
+  const photoLayer = ev.image_url
+    ? `<div class="card-image-photo" style="--bg-photo: url('${ev.image_url.replace(/'/g, "%27")}')"></div>`
     : "";
+  const showKanjiWatermark = !ev.image_url;
   return `
-    <article class="card" data-id="${ev.id}" data-cat="${ev.category}" data-type="event">
-      <div class="card-image" ${imageStyle}>
+    <article class="card ${sizeClass} ${isManual(ev) ? "has-editorial" : ""}" data-id="${ev.id}" data-cat="${ev.category}" data-type="event">
+      <div class="card-image">
+        ${photoLayer}
         <div class="card-image-grain"></div>
-        ${!ev.image_url ? `<span class="card-image-kanji">${kanji}</span>` : ""}
+        ${showKanjiWatermark ? `<span class="card-image-kanji">${kanji}</span>` : ""}
         <button class="card-fav ${isFav ? "active" : ""}" data-fav="${ev.id}" aria-label="收藏">${isFav ? "♥" : "♡"}</button>
         ${stamp}
+        ${editorialMark}
       </div>
       <div class="card-body">
         <div class="card-meta-row">
           <div class="card-date">${fmtDate(ev.date_start, ev.date_end)}</div>
         </div>
         <div class="card-cat">${catLabel}</div>
-        <h2 class="card-title">${title}</h2>
-        <p class="card-desc">${desc}</p>
-        <div class="card-loc">${ev.prefecture} · ${ev.venue}</div>
+        <h2 class="card-title">${titles.main}</h2>
+        ${titles.sub ? `<div class="card-title-ja">${titles.sub}</div>` : ""}
+        <p class="card-desc">${desc || ""}</p>
+        <div class="card-loc">${ev.prefecture} · ${ev.venue || ev.city}</div>
       </div>
     </article>
   `;
 }
 
-function renderPlaceCard(p) {
+function renderPlaceCard(p, sizeClass) {
+  const titles = dualTitle(p.name_zh, p.name_ja);
   const isFav = state.favs.has(p.id);
   const kanji = p.kanji || (p.subtype || "").charAt(0);
   const subtype = p.subtype || "";
-  const imageStyle = p.image_url
-    ? `style="background-image: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.35)), url('${p.image_url}'); background-size: cover; background-position: center;"`
+  const photoLayer = p.image_url
+    ? `<div class="card-image-photo" style="--bg-photo: url('${p.image_url.replace(/'/g, "%27")}')"></div>`
     : "";
   return `
-    <article class="card" data-id="${p.id}" data-cat="${subtype}" data-type="place">
-      <div class="card-image" ${imageStyle}>
+    <article class="card ${sizeClass} has-editorial" data-id="${p.id}" data-cat="${subtype}" data-type="place">
+      <div class="card-image">
+        ${photoLayer}
         <div class="card-image-grain"></div>
         ${!p.image_url ? `<span class="card-image-kanji">${kanji}</span>` : ""}
         <div class="card-type-mark">${subtype}</div>
@@ -1100,7 +1335,8 @@ function renderPlaceCard(p) {
       </div>
       <div class="card-body">
         <div class="card-cat">${p.prefecture} · ${p.city}</div>
-        <h2 class="card-title">${p.name_zh || p.name_ja}</h2>
+        <h2 class="card-title">${titles.main}</h2>
+        ${titles.sub ? `<div class="card-title-ja">${titles.sub}</div>` : ""}
         <p class="card-desc no-clamp">${p.lede_zh}</p>
         <div class="place-tip">${p.tip_zh}</div>
         <div class="place-access">
@@ -1112,10 +1348,6 @@ function renderPlaceCard(p) {
   `;
 }
 
-function renderCard(item) {
-  return item.category === "place" ? renderPlaceCard(item) : renderEventCard(item);
-}
-
 function render() {
   const grid = $("#grid");
   const list = getActiveItems();
@@ -1124,12 +1356,16 @@ function render() {
     grid.innerHTML = `<div class="empty"><div class="empty-kanji">空</div><div>${emptyMsg}</div></div>`;
     return;
   }
-  grid.innerHTML = list.map(renderCard).join("");
+  grid.innerHTML = list.map((item, idx) => {
+    const size = pickCardSize(item, idx);
+    return item.category === "place"
+      ? renderPlaceCard(item, size)
+      : renderEventCard(item, size);
+  }).join("");
   attachCardInteractions();
 }
 
 function updateRegionCounts() {
-  const f = state.filters;
   let pool;
   if (state.tab === "events") pool = state.events.filter(e => !e.hero);
   else if (state.tab === "places") pool = state.places;
@@ -1166,7 +1402,6 @@ function setTab(tab) {
   state.tab = tab;
   document.body.dataset.tab = tab;
   $$(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
-  // Reset region filter to "all" when switching tabs
   state.filters.region = "all";
   $$("#filterRegion .pill").forEach(p => p.classList.toggle("active", p.dataset.region === "all"));
   updateRegionCounts();
@@ -1178,14 +1413,16 @@ function openModal(id) {
   const pl = state.places.find(p => p.id === id);
   const item = ev || pl;
   if (!item) return;
-  const mapQ = encodeURIComponent(`${item.venue} ${item.city} ${item.prefecture}`);
+  const mapQ = encodeURIComponent(`${item.venue || item.city || ""} ${item.city || ""} ${item.prefecture || ""}`);
 
   if (pl) {
+    const titles = dualTitle(pl.name_zh, pl.name_ja);
     const subtype = pl.subtype || "";
     $("#modalContent").innerHTML = `
       <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
       <div class="modal-cat">${subtype}</div>
-      <h2 class="modal-title">${pl.name_zh || pl.name_ja}</h2>
+      <h2 class="modal-title">${titles.main}</h2>
+      ${titles.sub ? `<div class="modal-title-ja">${titles.sub}</div>` : '<div style="height:24px;"></div>'}
       <dl class="modal-meta">
         <dt>WHERE</dt><dd>${pl.venue}</dd>
         <dt>AREA</dt><dd>${pl.prefecture} · ${pl.city}</dd>
@@ -1199,17 +1436,19 @@ function openModal(id) {
       </div>
     `;
   } else {
+    const titles = dualTitle(ev.title_zh, ev.title_ja);
     const catLabel = CAT_LABEL[ev.category] || ev.category;
     $("#modalContent").innerHTML = `
       <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
       <div class="modal-cat">${catLabel}</div>
-      <h2 class="modal-title">${ev.title_zh || ev.title_ja}</h2>
+      <h2 class="modal-title">${titles.main}</h2>
+      ${titles.sub ? `<div class="modal-title-ja">${titles.sub}</div>` : '<div style="height:24px;"></div>'}
       <dl class="modal-meta">
         <dt>DATE</dt><dd>${fmtDate(ev.date_start, ev.date_end)}</dd>
-        <dt>VENUE</dt><dd>${ev.venue}</dd>
-        <dt>AREA</dt><dd>${ev.prefecture} · ${ev.city}</dd>
+        <dt>VENUE</dt><dd>${ev.venue || "—"}</dd>
+        <dt>AREA</dt><dd>${ev.prefecture} · ${ev.city || ""}</dd>
       </dl>
-      <p class="modal-desc">${ev.description_zh || ev.description_ja}</p>
+      <p class="modal-desc">${ev.description_zh || ev.description_ja || ""}</p>
       <div class="modal-actions">
         ${ev.url ? `<a class="btn primary" href="${ev.url}" target="_blank" rel="noopener">前往官网 →</a>` : ""}
         <a class="btn" href="https://www.google.com/maps/search/?api=1&query=${mapQ}" target="_blank" rel="noopener">地图查看</a>
