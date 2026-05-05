@@ -1111,12 +1111,429 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .card {
+    .card, .ed-card {
       opacity: 1 !important;
       transform: none !important;
       transition: box-shadow var(--motion-fast) var(--ease-tilt) !important;
     }
     .scroll-indicator { animation: none; }
+  }
+
+  /* ============================================================ *
+   * EDITORIAL LAYOUT · 杂志分章版式 (events tab only)
+   * ============================================================ */
+
+  .ed-stream {
+    margin: 0 auto;
+    padding: 0 0 96px;
+  }
+
+  /* — Section Header — */
+  .ed-section { padding: 64px 0 32px; position: relative; }
+  .ed-section-header {
+    max-width: 1200px;
+    margin: 0 auto 48px;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 32px;
+    align-items: end;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 18px;
+  }
+  .ed-section-kanji {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 64px;
+    color: var(--vermillion);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+  }
+  .ed-section-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ed-section-zh {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: 0.16em;
+    color: var(--ink);
+  }
+  .ed-section-en {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .ed-section-num {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 32px;
+    color: var(--ink-faint);
+    line-height: 1;
+  }
+
+  /* — Subtle section tints — */
+  .ed-section-matsuri { background: linear-gradient(180deg, transparent 0%, hsla(8, 30%, 92%, 0.35) 50%, transparent 100%); }
+  .ed-section-nature  { background: linear-gradient(180deg, transparent 0%, hsla(95, 22%, 92%, 0.35) 50%, transparent 100%); }
+  .ed-section-art     { background: linear-gradient(180deg, transparent 0%, hsla(245, 15%, 93%, 0.35) 50%, transparent 100%); }
+  .ed-section-food    { background: linear-gradient(180deg, transparent 0%, hsla(35, 28%, 92%, 0.35) 50%, transparent 100%); }
+
+  /* — Card base (no chrome) — */
+  .ed-card {
+    cursor: pointer;
+    position: relative;
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity var(--motion-slow) var(--ease-paper),
+                transform var(--motion-slow) var(--ease-paper);
+  }
+  .ed-card.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .ed-card .ed-photo,
+  .ed-card .ed-spread-photo,
+  .ed-card .ed-list-photo {
+    background-color: hsl(var(--cat-h, 8), var(--cat-s, 50%), 50%);
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    transition: filter var(--motion-normal);
+  }
+  .ed-card:hover .ed-photo,
+  .ed-card:hover .ed-spread-photo,
+  .ed-card:hover .ed-list-photo {
+    filter: brightness(1.06);
+  }
+  /* Category color tokens (reuse existing) */
+  .ed-card[data-cat="祭り"]    { --cat-h: 8;   --cat-s: 55%; }
+  .ed-card[data-cat="自然"]    { --cat-h: 95;  --cat-s: 28%; }
+  .ed-card[data-cat="アート"]  { --cat-h: 245; --cat-s: 22%; }
+  .ed-card[data-cat="グルメ"]  { --cat-h: 35;  --cat-s: 48%; }
+  .ed-card[data-cat="マーケット"] { --cat-h: 22; --cat-s: 42%; }
+  .ed-card[data-cat="展覧会"]  { --cat-h: 210; --cat-s: 20%; }
+  .ed-card[data-cat="音楽"]    { --cat-h: 355; --cat-s: 32%; }
+
+  .ed-bg-kanji {
+    position: absolute;
+    right: -16px;
+    bottom: -32px;
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 240px;
+    color: rgba(255,255,255,0.16);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* — Spread layout — */
+  .ed-spread-wrap {
+    max-width: 1200px;
+    margin: 0 auto 56px;
+    padding: 0 32px;
+  }
+  .ed-spread-card {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .ed-spread-photo {
+    aspect-ratio: 4/5;
+    position: relative;
+    background-color: hsl(var(--cat-h, 8), var(--cat-s, 50%), 50%);
+  }
+  .ed-spread-body {
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .ed-eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: var(--vermillion);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .ed-eyebrow::before {
+    content: "";
+    width: 24px;
+    height: 1px;
+    background: var(--vermillion);
+  }
+  .ed-spread-title {
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-weight: 600;
+    font-size: 44px;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .ed-spread-ja {
+    font-family: "Noto Serif JP", serif;
+    font-size: 13px;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    margin-bottom: 24px;
+  }
+  .ed-spread-lede {
+    font-size: 15px;
+    line-height: 2;
+    color: var(--ink-soft);
+    margin-bottom: 28px;
+  }
+  .ed-spread-lede::first-letter {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 600;
+    font-size: 2.6em;
+    float: left;
+    line-height: 0.92;
+    margin: 4px 10px 0 0;
+    color: var(--vermillion);
+  }
+  .ed-spread-cta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    margin-top: auto;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .ed-spread-cta .ed-arrow {
+    font-family: "Noto Serif SC", serif;
+    font-style: normal;
+    color: var(--vermillion);
+    font-size: 18px;
+    transition: transform var(--motion-fast);
+  }
+  .ed-card:hover .ed-arrow { transform: translateX(6px); }
+
+  /* — Photo grid (3-col, no chrome) — */
+  .ed-photo-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 56px 40px;
+  }
+  .ed-photo-grid--trio {
+    margin-top: 56px;
+    gap: 32px 40px;
+  }
+  .ed-photo-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .ed-photo {
+    aspect-ratio: 4/5;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .ed-photo-eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--vermillion);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .ed-photo-title {
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-weight: 600;
+    font-size: 17px;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ed-photo-ja {
+    font-family: "Noto Serif JP", serif;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ed-photo-meta {
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line-soft);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+  }
+
+  /* — Numbered editorial list — */
+  .ed-list {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    list-style: none;
+  }
+  .ed-list li.ed-list-item {
+    display: grid;
+    grid-template-columns: 56px 100px 1fr 220px;
+    gap: 36px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: start;
+    cursor: pointer;
+    transition: background var(--motion-fast);
+  }
+  .ed-list li.ed-list-item:hover {
+    background: linear-gradient(90deg, transparent, var(--bg-deep) 30%, var(--bg-deep) 70%, transparent);
+  }
+  .ed-list-num {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--vermillion);
+    letter-spacing: 0.02em;
+    padding-top: 6px;
+  }
+  .ed-list-photo {
+    aspect-ratio: 1;
+    position: relative;
+    background-color: hsl(var(--cat-h, 8), var(--cat-s, 50%), 50%);
+  }
+  .ed-list-photo .ed-bg-kanji {
+    font-size: 80px;
+    right: -8px;
+    bottom: -16px;
+  }
+  .ed-list-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 4px;
+  }
+  .ed-list-title {
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-weight: 600;
+    font-size: 21px;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+  }
+  .ed-list-ja {
+    font-family: "Noto Serif JP", serif;
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+  .ed-list-desc {
+    font-size: 13px;
+    line-height: 1.85;
+    color: var(--ink-soft);
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ed-list-meta {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 6px;
+  }
+  .ed-list-date {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--vermillion);
+    letter-spacing: 0.06em;
+  }
+  .ed-list-loc {
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+  }
+  .ed-list-cat {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+
+  /* — Compact list (long-tail walkerplus) — */
+  .ed-list--compact li.ed-list-item {
+    grid-template-columns: 56px 1fr 180px;
+    padding: 18px 0;
+  }
+  .ed-list--compact .ed-list-photo {
+    display: none;
+  }
+  .ed-list--compact .ed-list-title {
+    font-size: 17px;
+  }
+  .ed-list--compact .ed-list-desc {
+    -webkit-line-clamp: 1;
+    margin-top: 2px;
+  }
+
+  /* — Responsive — */
+  @media (max-width: 900px) {
+    .ed-section { padding: 48px 0 24px; }
+    .ed-section-header {
+      grid-template-columns: 56px 1fr;
+      gap: 20px;
+      padding: 0 20px;
+    }
+    .ed-section-kanji { font-size: 44px; }
+    .ed-section-num { display: none; }
+    .ed-spread-wrap { padding: 0 20px; }
+    .ed-spread-card { grid-template-columns: 1fr; gap: 32px; }
+    .ed-spread-title { font-size: 32px; }
+    .ed-photo-grid { grid-template-columns: repeat(2, 1fr); padding: 0 20px; gap: 40px 24px; }
+    .ed-list { padding: 0 20px; }
+    .ed-list li.ed-list-item {
+      grid-template-columns: 40px 80px 1fr;
+      gap: 20px;
+    }
+    .ed-list-meta {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      gap: 14px;
+      text-align: left;
+      align-items: baseline;
+      padding-top: 0;
+      margin-top: 8px;
+    }
+    .ed-list--compact li.ed-list-item {
+      grid-template-columns: 40px 1fr;
+    }
+  }
+  @media (max-width: 600px) {
+    .ed-photo-grid { grid-template-columns: 1fr; gap: 36px; }
   }
 </style>
 </head>
@@ -1242,7 +1659,7 @@
   <div class="tabs-jp-mark">本月精選 · MAY 2026</div>
 </div>
 
-<main>
+<main id="mainContent">
   <div class="grid" id="grid"></div>
 </main>
 
@@ -1588,20 +2005,170 @@ function renderPlaceCard(p, sizeClass) {
 }
 
 function render() {
-  const grid = $("#grid");
+  const main = $("#mainContent");
   const list = getActiveItems();
   const emptyMsg = state.tab === "favs" ? "还没有收藏的活动或地点" : "没有符合条件的内容";
+
   if (list.length === 0) {
-    grid.innerHTML = `<div class="empty"><div class="empty-kanji">空</div><div>${emptyMsg}</div></div>`;
+    main.innerHTML = `<div class="grid"><div class="empty"><div class="empty-kanji">空</div><div>${emptyMsg}</div></div></div>`;
     return;
   }
-  grid.innerHTML = list.map((item, idx) => {
-    const size = pickCardSize(item, idx);
-    return item.category === "place"
-      ? renderPlaceCard(item, size)
-      : renderEventCard(item, size);
-  }).join("");
+
+  if (state.tab === "events") {
+    main.innerHTML = renderEditorial(list);
+  } else {
+    main.innerHTML = `<div class="grid">` + list.map((item, idx) => {
+      const size = pickCardSize(item, idx);
+      return item.category === "place"
+        ? renderPlaceCard(item, size)
+        : renderEventCard(item, size);
+    }).join("") + `</div>`;
+  }
   attachCardInteractions();
+}
+
+/* ========== Editorial section-based layout (events tab) ========== */
+
+const SECTIONS = [
+  { key: 'featured', kanji: '特', zh: '本期特集',          en: 'FEATURED',         layout: 'spread', match: e => e.featured },
+  { key: 'matsuri',  kanji: '祭', zh: '祭典',              en: 'FESTIVALS',        layout: 'photo',  match: e => e.category === '祭り' },
+  { key: 'nature',   kanji: '緑', zh: '自然',              en: 'NATURE',           layout: 'photo',  match: e => e.category === '自然' },
+  { key: 'art',      kanji: '藝', zh: '展覧 · 美術',        en: 'EXHIBITIONS',      layout: 'list',   match: e => e.category === 'アート' || e.category === '展覧会' },
+  { key: 'food',     kanji: '食', zh: 'グルメ · 市集',      en: 'FOOD & MARKETS',   layout: 'photo',  match: e => e.category === 'グルメ' || e.category === 'マーケット' },
+  { key: 'other',    kanji: '般', zh: 'その他',            en: 'MORE',             layout: 'compact-list', match: () => true },
+];
+
+const padNum = (n) => String(n).padStart(2, '0');
+const escUrl = (s) => (s || '').replace(/'/g, '%27');
+
+function renderEditorial(items) {
+  const used = new Set();
+  let sectionIdx = 0;
+  const out = [];
+
+  for (const sec of SECTIONS) {
+    let matches;
+    if (sec.key === 'other') {
+      matches = items.filter(e => !used.has(e.id));
+    } else {
+      matches = items.filter(e => sec.match(e) && !used.has(e.id));
+      matches.forEach(e => used.add(e.id));
+    }
+    if (matches.length === 0) continue;
+    sectionIdx++;
+    out.push(renderSectionHTML(sec, matches, sectionIdx));
+  }
+
+  return `<div class="ed-stream">${out.join("")}</div>`;
+}
+
+function renderSectionHTML(sec, items, idx) {
+  const header = `
+    <header class="ed-section-header">
+      <div class="ed-section-kanji">${sec.kanji}</div>
+      <div class="ed-section-titles">
+        <div class="ed-section-zh">${sec.zh}</div>
+        <div class="ed-section-en">${sec.en} · ${padNum(items.length)}</div>
+      </div>
+      <div class="ed-section-num">N° ${padNum(idx)}</div>
+    </header>
+  `;
+  let body;
+  if (sec.layout === 'spread')             body = renderSpreadSection(items);
+  else if (sec.layout === 'photo')         body = renderPhotoSection(items);
+  else if (sec.layout === 'list')          body = renderListSection(items, false);
+  else if (sec.layout === 'compact-list')  body = renderListSection(items, true);
+  else                                     body = renderPhotoSection(items);
+  return `<section class="ed-section ed-section-${sec.key}">${header}${body}</section>`;
+}
+
+function renderSpreadSection(items) {
+  const [first, ...rest] = items;
+  let html = `<div class="ed-spread-wrap">${renderSpreadCard(first)}</div>`;
+  if (rest.length) {
+    html += `<div class="ed-photo-grid ed-photo-grid--trio">${rest.slice(0, 3).map(renderPhotoCard).join('')}</div>`;
+  }
+  return html;
+}
+
+function spreadPhoto(ev) {
+  if (ev.image_url) {
+    return `<div class="ed-spread-photo" style="background-image: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.25)), url('${escUrl(ev.image_url)}');"></div>`;
+  }
+  return `<div class="ed-spread-photo"><span class="ed-bg-kanji" style="font-size: 380px; right: -40px; bottom: -80px;">${ev.kanji || '事'}</span></div>`;
+}
+
+function renderSpreadCard(ev) {
+  const titles = dualTitle(ev.title_zh, ev.title_ja);
+  return `
+    <article class="ed-card ed-spread-card" data-id="${ev.id}" data-cat="${ev.category}">
+      ${spreadPhoto(ev)}
+      <div class="ed-spread-body">
+        <div class="ed-eyebrow">${fmtDate(ev.date_start, ev.date_end)} · ${ev.prefecture}</div>
+        <h3 class="ed-spread-title">${titles.main}</h3>
+        ${titles.sub ? `<div class="ed-spread-ja">${titles.sub}</div>` : ''}
+        <p class="ed-spread-lede">${ev.lede_zh || ev.description_zh || ev.description_ja || ''}</p>
+        <div class="ed-spread-cta">
+          <span>${ev.venue || ev.city}</span>
+          <span class="ed-arrow">→</span>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderPhotoSection(items) {
+  return `
+    <div class="ed-photo-grid">
+      ${items.map(renderPhotoCard).join('')}
+    </div>
+  `;
+}
+
+function gridPhoto(ev, klass = 'ed-photo') {
+  if (ev.image_url) {
+    return `<div class="${klass}" style="background-image: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.32)), url('${escUrl(ev.image_url)}');"></div>`;
+  }
+  return `<div class="${klass}"><span class="ed-bg-kanji">${ev.kanji || '事'}</span></div>`;
+}
+
+function renderPhotoCard(ev) {
+  const titles = dualTitle(ev.title_zh, ev.title_ja);
+  return `
+    <article class="ed-card ed-photo-card" data-id="${ev.id}" data-cat="${ev.category}">
+      ${gridPhoto(ev)}
+      <div class="ed-photo-eyebrow">${fmtDateCompact(ev.date_start, ev.date_end)} · ${ev.prefecture}</div>
+      <h3 class="ed-photo-title">${titles.main}</h3>
+      ${titles.sub ? `<div class="ed-photo-ja">${titles.sub}</div>` : ''}
+      <div class="ed-photo-meta">${ev.venue || ev.city || ''}</div>
+    </article>
+  `;
+}
+
+function renderListSection(items, compact) {
+  const cls = compact ? 'ed-list ed-list--compact' : 'ed-list';
+  return `<ol class="${cls}">${items.map((ev, i) => renderListItem(ev, i + 1, compact)).join('')}</ol>`;
+}
+
+function renderListItem(ev, n, compact) {
+  const titles = dualTitle(ev.title_zh, ev.title_ja);
+  const photo = compact ? '' : gridPhoto(ev, 'ed-list-photo');
+  return `
+    <li class="ed-card ed-list-item" data-id="${ev.id}" data-cat="${ev.category}">
+      <span class="ed-list-num">N°${padNum(n)}</span>
+      ${photo}
+      <div class="ed-list-body">
+        <h3 class="ed-list-title">${titles.main}</h3>
+        ${titles.sub ? `<div class="ed-list-ja">${titles.sub}</div>` : ''}
+        ${(ev.description_zh || ev.description_ja) ? `<p class="ed-list-desc">${ev.description_zh || ev.description_ja}</p>` : ''}
+      </div>
+      <div class="ed-list-meta">
+        <div class="ed-list-date">${fmtDate(ev.date_start, ev.date_end)}</div>
+        <div class="ed-list-loc">${ev.prefecture} · ${ev.venue || ev.city || ''}</div>
+        <div class="ed-list-cat">${CAT_LABEL[ev.category] || ev.category}</div>
+      </div>
+    </li>
+  `;
 }
 
 function updateRegionCounts() {
@@ -1742,7 +2309,7 @@ function ensureObserver() {
 }
 
 function attachCardInteractions() {
-  const cards = $$(".card");
+  const cards = $$(".card, .ed-card");
   const obs = ensureObserver();
   cards.forEach(card => {
     if (reduceMotion) {
@@ -1752,7 +2319,10 @@ function attachCardInteractions() {
     } else {
       card.classList.add("revealed");
     }
-    attachTilt(card);
+    // 3D tilt only on traditional cards (ed-cards are flat editorial style)
+    if (card.classList.contains("card")) {
+      attachTilt(card);
+    }
   });
 }
 
@@ -1799,7 +2369,7 @@ function bindEvents() {
     render();
   });
 
-  $("#grid").addEventListener("click", e => {
+  $("#mainContent").addEventListener("click", e => {
     const fav = e.target.closest("[data-fav]");
     if (fav) {
       e.stopPropagation();
@@ -1810,7 +2380,7 @@ function bindEvents() {
       render();
       return;
     }
-    const card = e.target.closest(".card");
+    const card = e.target.closest(".card, .ed-card");
     if (card) openModal(card.dataset.id);
   });
 
