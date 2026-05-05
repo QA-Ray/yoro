@@ -194,18 +194,102 @@
   }
   .hero-watermark {
     position: absolute;
-    right: -10vw;
+    right: -8vw;
     top: 50%;
     transform: translateY(-50%);
     font-family: "Noto Serif JP", serif;
-    font-size: clamp(420px, 90vh, 900px);
+    font-size: clamp(420px, 80vh, 820px);
     font-weight: 900;
     color: var(--vermillion);
-    opacity: 0.07;
+    opacity: 0.09;
     line-height: 0.9;
     pointer-events: none;
     user-select: none;
     will-change: transform;
+  }
+
+  /* ============== Hero Upcoming Timeline ============== */
+  .hero-upcoming {
+    position: absolute;
+    right: 64px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 320px;
+    z-index: 3;
+    background: rgba(253, 251, 246, 0.55);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--line-soft);
+    padding: 24px 26px;
+  }
+  .hero-upcoming-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .hero-upcoming-label-zh {
+    font-family: "Noto Serif SC", serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.12em;
+  }
+  .hero-upcoming-label-en {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    color: var(--vermillion);
+    text-transform: uppercase;
+  }
+  .hero-upcoming-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .hero-upcoming-list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    padding: 10px 0;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line-soft);
+    cursor: pointer;
+    transition: background var(--motion-fast);
+  }
+  .hero-upcoming-list li:last-child { border-bottom: none; }
+  .hero-upcoming-list li:hover { background: rgba(168, 54, 42, 0.05); }
+  .up-date {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--vermillion);
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+  .up-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+  }
+  .up-name {
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .up-loc {
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+  }
+  @media (max-width: 1200px) {
+    .hero-upcoming { display: none; }
   }
   .hero-stamp {
     position: absolute;
@@ -1076,6 +1160,13 @@
     <div class="hero-meta" id="heroMeta">5月15日 – 17日<span class="dot">·</span>东京 · 浅草神社</div>
     <a href="#" class="hero-cta" id="heroCta" target="_blank" rel="noopener">了解详情 →</a>
   </div>
+  <aside class="hero-upcoming" id="heroUpcoming" hidden>
+    <div class="hero-upcoming-head">
+      <span class="hero-upcoming-label-zh">本期精選</span>
+      <span class="hero-upcoming-label-en">ALSO IN ISSUE</span>
+    </div>
+    <ul class="hero-upcoming-list" id="heroUpcomingList"></ul>
+  </aside>
   <div class="hero-jp-vertical" id="heroJpVertical">三社祭・浅草神社例大祭</div>
   <div class="scroll-indicator">↓ 此刻全部</div>
 </section>
@@ -1216,6 +1307,16 @@ function fmtDate(start, end) {
   return `${fmt(s)} – ${fmt(e)}`;
 }
 
+function fmtDateCompact(start, end) {
+  const s = new Date(start);
+  const e = new Date(end);
+  const f = d => `${d.getMonth() + 1}/${d.getDate()}`;
+  if (start === end) return f(s);
+  const days = Math.round((e - s) / 86400000);
+  if (days > 30) return `${f(s)}—`;
+  return `${f(s)}–${f(e)}`;
+}
+
 function isThisWeekend(ev) {
   const today = new Date();
   const day = today.getDay();
@@ -1287,16 +1388,124 @@ function pickCardSize(item, idx) {
   return "";
 }
 
+/* ========== Hero rotation ========== */
+
+const SEASON_HERO = {
+  // Generic fallback when no hero events upcoming.
+  // Adapts roughly by month — Japanese 24-solar-term inspired.
+  pickByMonth() {
+    const m = new Date().getMonth() + 1;
+    if (m === 1 || m === 2)        return { kanji: "冬", eyebrow: "DAIKAN · DEEP WINTER", titleZh: "雪見", titleAccent: "の冬", lede: "深冬、白雪覆顶。日本一年中最静谧的时节，去看雪国温泉、赏寒梅、听三味线。", season: "深冬" };
+    if (m === 3 || m === 4)        return { kanji: "桜", eyebrow: "SHUNBUN · SPRING", titleZh: "桜の", titleAccent: "国", lede: "三月底到四月初，整个国家被粉色覆盖。这是日本最被讨论的两周——但本地人心里藏着比上野公园更安静的赏樱地。", season: "春" };
+    if (m === 5 || m === 6)        return { kanji: "夏", eyebrow: "RIKKA · BEGINNING OF SUMMER", titleZh: "新緑と", titleAccent: "祭", lede: "新绿满城，祭典纷至。立夏到夏至——也许是日本一年里色彩最浓的两个月。", season: "初夏" };
+    if (m === 7 || m === 8)        return { kanji: "祭", eyebrow: "TAISHO · MIDSUMMER", titleZh: "夏祭の", titleAccent: "夜", lede: "盆踊り、花火、夜店——日本人最热闹的两个月。在浴衣下走过、纸灯笼下吃刨冰，是夏天该有的样子。", season: "盛夏" };
+    if (m === 9 || m === 10)       return { kanji: "紅", eyebrow: "SHUBUN · AUTUMN", titleZh: "紅葉の", titleAccent: "京都", lede: "九月末开始，从北海道一路向南红下来。日本秋天的颜色比樱花更浓重——在京都看一周，会忘了世界。", season: "秋" };
+    return                                  { kanji: "煌", eyebrow: "TOJI · WINTER NIGHTS", titleZh: "灯影的", titleAccent: "冬夜", lede: "12 月起整座国家进入年终模式：神社的初詣、商店街的灯饰、温泉旅馆的暖气——日本最有人情味的几周。", season: "歳末" };
+  }
+};
+
+function pickHero() {
+  const today = new Date().toISOString().slice(0, 10);
+  const candidates = state.events.filter(e => e.hero && e.lede_zh);
+  if (!candidates.length) return null;
+
+  const sortKey = (e) => [e.date_start, -1 * (new Date(e.date_end) - new Date(e.date_start))];
+
+  // Prefer upcoming (not yet started) events
+  const upcoming = candidates
+    .filter(e => e.date_start >= today)
+    .sort((a, b) => {
+      if (a.date_start !== b.date_start) return a.date_start.localeCompare(b.date_start);
+      return b.date_end.localeCompare(a.date_end);
+    });
+  if (upcoming.length) return upcoming[0];
+
+  // Fallback: ongoing (started but not yet ended)
+  const ongoing = candidates
+    .filter(e => e.date_start <= today && (!e.date_end || e.date_end >= today))
+    .sort((a, b) => b.date_end.localeCompare(a.date_end));
+  if (ongoing.length) return ongoing[0];
+
+  return null;
+}
+
+function pickHeroUpcoming(currentHeroId) {
+  const today = new Date().toISOString().slice(0, 10);
+  return state.events
+    .filter(e => e.hero && e.lede_zh && e.id !== currentHeroId)
+    .filter(e => !e.date_end || e.date_end >= today)
+    .sort((a, b) => a.date_start.localeCompare(b.date_start))
+    .slice(0, 4);
+}
+
+function renderHeroUpcoming(currentHeroId) {
+  const list = pickHeroUpcoming(currentHeroId);
+  const aside = $("#heroUpcoming");
+  if (!list.length) { aside.hidden = true; return; }
+  $("#heroUpcomingList").innerHTML = list.map(e => `
+    <li data-id="${e.id}">
+      <span class="up-date">${fmtDateCompact(e.date_start, e.date_end)}</span>
+      <div class="up-content">
+        <span class="up-name">${e.title_zh || e.title_ja}</span>
+        <span class="up-loc">${e.prefecture}</span>
+      </div>
+    </li>
+  `).join("");
+  aside.hidden = false;
+  // click to scroll-link to its card in the grid
+  aside.addEventListener("click", (e) => {
+    const li = e.target.closest("li");
+    if (!li) return;
+    const id = li.dataset.id;
+    const target = document.querySelector(`.card[data-id="${id}"]`);
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, { once: true });
+}
+
 function renderHero() {
-  const hero = state.events.find(e => e.hero);
-  if (!hero) return;
-  $("#heroWatermark").textContent = hero.kanji || "祭";
-  $("#heroEyebrow").textContent = `${hero.title_ja} · ${hero.city.toUpperCase()} · ${hero.prefecture.toUpperCase()}`;
-  $("#heroLede").textContent = hero.lede_zh || hero.description_zh;
-  $("#heroMeta").innerHTML = `${fmtDate(hero.date_start, hero.date_end)}<span class="dot">·</span>${hero.prefecture} · ${hero.venue}`;
-  $("#heroCta").href = hero.url || "#";
-  $("#heroJpVertical").textContent = `${hero.title_ja}・${hero.venue}`;
-  if (hero.season_tag) $("#heroHanko").textContent = hero.season_tag;
+  const hero = pickHero();
+  if (hero) {
+    $("#heroWatermark").textContent = hero.kanji || "祭";
+    $("#heroEyebrow").textContent = `${hero.title_ja} · ${hero.city.toUpperCase()} · ${hero.prefecture.toUpperCase()}`;
+    const heroTitleEl = $("#heroTitle");
+    // Reset to the curated default if already a custom one
+    heroTitleEl.innerHTML = heroTitleZhFor(hero);
+    $("#heroLede").textContent = hero.lede_zh || hero.description_zh;
+    $("#heroMeta").innerHTML = `${fmtDate(hero.date_start, hero.date_end)}<span class="dot">·</span>${hero.prefecture} · ${hero.venue}`;
+    $("#heroCta").href = hero.url || "#";
+    $("#heroCta").textContent = "了解详情 →";
+    $("#heroJpVertical").textContent = `${hero.title_ja}・${hero.venue}`;
+    $("#heroHanko").textContent = hero.season_tag || "今月";
+    renderHeroUpcoming(hero.id);
+  } else {
+    // Season fallback
+    const s = SEASON_HERO.pickByMonth();
+    $("#heroWatermark").textContent = s.kanji;
+    $("#heroEyebrow").textContent = s.eyebrow;
+    $("#heroTitle").innerHTML = `${s.titleZh}<span class="accent">${s.titleAccent}</span>。`;
+    $("#heroLede").textContent = s.lede;
+    $("#heroMeta").innerHTML = `${new Date().getFullYear()}年 · ${s.season}<span class="dot">·</span>YORO 編集部`;
+    $("#heroCta").href = "#tabs";
+    $("#heroCta").textContent = "看本月精选 →";
+    $("#heroJpVertical").textContent = `${s.season} · YORO`;
+    $("#heroHanko").textContent = s.season;
+    renderHeroUpcoming(null);
+  }
+}
+
+function heroTitleZhFor(hero) {
+  // Per-event custom hero titles (editorial display copy, not the small title_zh).
+  // Falls back to a generic "<title>、<season>" pattern.
+  const customs = {
+    "sanja-2026":          ['百座神舆，', '初夏', '的浅草。'],
+    "aoi-2026":            ['平安王朝，', '行', '过新緑。'],
+    "yokohama-port-2026":  ['一座城市的', '生日', '夜。'],
+    "kamakura-ajisai-2026":['雨打', '蓝', '。'],
+    "kamogawa-yuka-2026":  ['川风，', '夕餉', '。'],
+  };
+  const c = customs[hero.id];
+  if (c) return `${c[0]}<br/><span class="accent">${c[1]}</span>${c[2]}`;
+  return `${hero.title_zh || hero.title_ja}、<br/><span class="accent">${hero.season_tag || "今月"}</span>。`;
 }
 
 function dualTitle(zh, ja) {

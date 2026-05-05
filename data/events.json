@@ -34,9 +34,11 @@
       "venue": "京都御所〜下鴨神社〜上賀茂神社",
       "description_ja": "京都三大祭の一つ。平安絵巻さながらの王朝行列が新緑の都大路を進む、優雅なる古都の祭典。",
       "description_zh": "京都三大祭之一。平安王朝装束的行列穿越新绿的京都街道，古都最优雅的祭典。",
+      "lede_zh": "平安时代留下来的王朝行列。来自京都御所的牛车、骑马武士、平安装束的少女——日本最古老的国家祭礼，也是京都最优雅的一天。",
       "url": "https://www.kyokanko.or.jp/",
       "image_url": "",
       "featured": true,
+      "hero": true,
       "season_tag": "千年"
     },
     {
@@ -50,11 +52,14 @@
       "prefecture": "神奈川",
       "city": "横浜",
       "venue": "臨港パーク・みなとみらい一帯",
-      "description_ja": "横浜港開港を祝う初夏の祭典。ライブステージ、グルメ、夜空を彩る花火フィナーレ。",
+      "description_ja": "横浜開港を祝う初夏の祭典。ライブステージ、グルメ、夜空を彩る花火フィナーレ。",
       "description_zh": "庆祝横滨开港的初夏庆典。现场演出、美食市集，以夜空烟火压轴。",
+      "lede_zh": "1859 年横滨开港，关了千年的国门第一次缓缓打开。每年六月初，横滨人在港口放烟火纪念这一刻——日本最早接触西洋的城市，最低调的庆典。",
       "url": "https://www.kaikosai.com/",
       "image_url": "",
-      "featured": true
+      "featured": true,
+      "hero": true,
+      "season_tag": "開港"
     },
     {
       "id": "bunkyo-ajisai-2026",
@@ -86,9 +91,11 @@
       "venue": "明月院",
       "description_ja": "「あじさい寺」の異名を持つ古刹。境内を埋める明月院ブルーが、雨に濡れて深く澄む。",
       "description_zh": "人称「绣球花寺」的古刹，整座庭院的「明月院蓝」在雨中愈发清澈。",
+      "lede_zh": "明月院的庭院里只有一种颜色，叫「明月院蓝」。整座院子被绣球花填满的样子，是日本梅雨季最让人安静的画面之一。雨天去最值。",
       "url": "https://trip-kamakura.com/",
       "image_url": "",
       "featured": true,
+      "hero": true,
       "season_tag": "梅雨"
     },
     {
@@ -172,9 +179,11 @@
       "venue": "鴨川沿い 二条〜五条",
       "description_ja": "鴨川の流れを眼下に、川風に吹かれながらの夕餉。京の夏を体現する季節限定の風物詩。",
       "description_zh": "脚下是鸭川流水，川风习习中的晚餐。代表京都夏日风情的季节限定体验。",
+      "lede_zh": "五月起到九月，鸭川两岸的料亭会在水面上搭起木台。在那里吃晚饭，川风穿过来，是最京都的夏天打开方式。",
       "url": "https://www.kyoto-yuka.com/",
       "image_url": "",
       "featured": true,
+      "hero": true,
       "season_tag": "夏限"
     },
     {
