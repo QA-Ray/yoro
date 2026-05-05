@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>YORO · 遠方便り｜日本</title>
+<title>YORO · 远方来信｜日本</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;900&family=Noto+Serif+JP:wght@400;600;900&family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
@@ -2347,7 +2347,7 @@
   <div class="topbar-inner">
     <div class="brand">
       <span class="brand-logo">YORO</span>
-      <span class="brand-tag">遠方便り · LETTERS FROM AFAR</span>
+      <span class="brand-tag">远方来信 · LETTERS FROM AFAR</span>
     </div>
     <div class="topbar-right-group">
       <div class="topbar-issue">
@@ -2363,14 +2363,14 @@
   <button class="hero-arrow hero-arrow-prev" id="heroArrowPrev" aria-label="上一个" type="button"><span class="arrow-glyph">‹</span></button>
   <button class="hero-arrow hero-arrow-next" id="heroArrowNext" aria-label="下一个" type="button"><span class="arrow-glyph">›</span></button>
   <div class="hero-dots" id="heroDots"></div>
-  <div class="scroll-indicator">↓ 続きへ、ゆっくり</div>
+  <div class="scroll-indicator">↓ 慢慢往下</div>
 </section>
 
 <aside class="season-strip">
   <div class="season-kanji"><span>立</span><span>夏</span></div>
   <div class="season-rule"></div>
   <div class="season-text">
-    <div class="season-text-zh">風が緑になる頃</div>
+    <div class="season-text-zh">风变绿的时候</div>
     <div class="season-text-meta">RIKKA · WHEN THE WIND TURNS GREEN</div>
   </div>
   <div class="season-fl">No. 05</div>
@@ -2450,14 +2450,14 @@
 </div>
 
 <footer>
-  <div class="footer-poem">遠方を、近くに。</div>
+  <div class="footer-poem">让远方，近些。</div>
   <div class="footer-poem-en">Bringing the far, near.</div>
   <div class="footer-rule"></div>
   <div class="footer-quote" id="footerQuote">
     <span class="fq-jp"></span>
     <span class="fq-en"></span>
   </div>
-  <div class="footer-meta">© YORO 2026 · 遠方便り</div>
+  <div class="footer-meta">© YORO 2026 · 远方来信</div>
   <div style="margin-top: 8px;">
     <span class="accent">SEED DATA · v0.4</span>
     <span style="margin: 0 12px;">·</span>
@@ -3034,8 +3034,8 @@ function render() {
   const main = $("#mainContent");
   const list = getActiveItems();
   const emptyMsg = state.tab === "favs"
-    ? "まだ何も、しおりは挟んでいない / Nothing bookmarked — yet."
-    : "ここは、まだ静か / Quiet here, for now.";
+    ? "还没有收藏 / Nothing bookmarked — yet."
+    : "这里还很安静 / Quiet here, for now.";
 
   if (list.length === 0) {
     main.innerHTML = `<div class="grid"><div class="empty"><div class="empty-kanji">空</div><div>${emptyMsg}</div></div></div>`;
@@ -3061,22 +3061,22 @@ function render() {
 /* ========== Editorial section-based layout (events tab) ========== */
 
 const SECTIONS = [
-  { key: 'featured', kanji: '特', zh: '本期特集',          en: 'FEATURED',         layout: 'spread', match: e => e.featured,
-    epigraph_jp: "本期、何度も読みたいもの",         epigraph_en: "This issue, worth reading twice." },
+  { key: 'featured', kanji: '特', zh: '本期精选',          en: 'FEATURED',         layout: 'spread', match: e => e.featured,
+    epigraph_zh: "值得反复看的几件事",                epigraph_en: "Worth reading twice." },
   { key: 'nature',   kanji: '緑', zh: '自然',              en: 'NATURE',           layout: 'photo',  match: e => e.category === '自然',
-    epigraph_jp: "風が、緑になる頃",                  epigraph_en: "When the wind turns green." },
-  { key: 'food',     kanji: '食', zh: 'グルメ · 市集',      en: 'FOOD & MARKETS',   layout: 'photo',  match: e => e.category === 'グルメ' || e.category === 'マーケット',
-    epigraph_jp: "湯気のむこうに、誰かいる",         epigraph_en: "Beyond the steam, someone." },
+    epigraph_zh: "风变绿的时候",                       epigraph_en: "When the wind turns green." },
+  { key: 'food',     kanji: '食', zh: '美食 · 市集',        en: 'FOOD & MARKETS',   layout: 'photo',  match: e => e.category === 'グルメ' || e.category === 'マーケット',
+    epigraph_zh: "蒸汽那头，有人",                     epigraph_en: "Beyond the steam, someone." },
   { key: 'matsuri',  kanji: '祭', zh: '祭典',              en: 'FESTIVALS',        layout: 'photo',  match: e => e.category === '祭り',
-    epigraph_jp: "夜更け、月が神輿を引く",            epigraph_en: "Late night, the moon pulls the mikoshi." },
+    epigraph_zh: "深夜，月光引着神舆",                  epigraph_en: "Late night, moonlight leads the mikoshi." },
   { key: 'live',     kanji: '響', zh: '演出',              en: 'LIVE & STAGE',     layout: 'photo',  match: e => e.category === '音楽',
-    epigraph_jp: "音が、人を集める夜",                epigraph_en: "A night where sound gathers people." },
-  { key: 'art',      kanji: '藝', zh: '展覧 · 美術',        en: 'EXHIBITIONS',      layout: 'list',   match: e => e.category === 'アート' || e.category === '展覧会',
-    epigraph_jp: "見て、立ち止まる",                  epigraph_en: "To look, and to pause." },
+    epigraph_zh: "声音聚拢人群的夜",                    epigraph_en: "A night where sound gathers people." },
+  { key: 'art',      kanji: '藝', zh: '展览 · 美术',        en: 'EXHIBITIONS',      layout: 'list',   match: e => e.category === 'アート' || e.category === '展覧会',
+    epigraph_zh: "看见，然后停下",                     epigraph_en: "To look, and to pause." },
   { key: 'sports',   kanji: '競', zh: '体育',              en: 'SPORTS',           layout: 'list',   match: e => e.category === 'スポーツ',
-    epigraph_jp: "走る人、応援する人",                epigraph_en: "Those who run, those who cheer." },
-  { key: 'other',    kanji: '般', zh: 'その他',            en: 'MORE',             layout: 'compact-list', match: () => true,
-    epigraph_jp: "それから、まだ何かある",            epigraph_en: "And then, still, something else." },
+    epigraph_zh: "奔跑的人，喝彩的人",                  epigraph_en: "Those who run, those who cheer." },
+  { key: 'other',    kanji: '般', zh: '其他',              en: 'MORE',             layout: 'compact-list', match: () => true,
+    epigraph_zh: "然后，还有些什么",                   epigraph_en: "And then, still, something else." },
 ];
 
 const padNum = (n) => String(n).padStart(2, '0');
@@ -3104,9 +3104,9 @@ function renderEditorial(items) {
 }
 
 function renderSectionHTML(sec, items, idx) {
-  const epigraph = (sec.epigraph_jp || sec.epigraph_en) ? `
+  const epigraph = (sec.epigraph_zh || sec.epigraph_en) ? `
     <div class="cover-epigraph">
-      ${sec.epigraph_jp ? `<span class="epi-jp">${sec.epigraph_jp}</span>` : ''}
+      ${sec.epigraph_zh ? `<span class="epi-jp">${sec.epigraph_zh}</span>` : ''}
       ${sec.epigraph_en ? `<span class="epi-en">— ${sec.epigraph_en}</span>` : ''}
     </div>
   ` : '';
@@ -3640,13 +3640,13 @@ function initTheme() {
 }
 
 const DAILY_QUOTES = [
-  { jp: "風待ち。",                       en: "Waiting for wind." },
-  { jp: "月夜、ふと。",                    en: "Moonlit night, a glance." },
-  { jp: "知らない街角で、ひとり。",          en: "Alone, on an unknown corner." },
-  { jp: "旅は、続きの言葉。",                en: "A journey is a continuation of words." },
-  { jp: "遠くを、見ていた。",                en: "I was looking at the distance." },
-  { jp: "雨の音も、旅。",                   en: "Even rain has a journey." },
-  { jp: "言葉にならない、季節。",            en: "A season without words." },
+  { zh: "等风的人。",                    en: "Waiting for wind." },
+  { zh: "月夜，忽然。",                  en: "Moonlit night, a glance." },
+  { zh: "陌生的街角，一个人。",          en: "Alone, on an unknown corner." },
+  { zh: "旅行，是言语的延续。",          en: "A journey is a continuation of words." },
+  { zh: "我在看远方。",                  en: "I was looking at the distance." },
+  { zh: "雨声，也是旅。",                en: "Even rain has a journey." },
+  { zh: "说不出口的，季节。",            en: "A season without words." },
 ];
 
 function renderDailyQuote() {
@@ -3657,7 +3657,7 @@ function renderDailyQuote() {
   const start = new Date(d.getFullYear(), 0, 0);
   const doy = Math.floor((d - start) / 86400000);
   const q = DAILY_QUOTES[doy % DAILY_QUOTES.length];
-  el.querySelector(".fq-jp").textContent = q.jp;
+  el.querySelector(".fq-jp").textContent = q.zh;
   el.querySelector(".fq-en").textContent = "— " + q.en;
 }
 
