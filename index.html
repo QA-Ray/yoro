@@ -67,8 +67,23 @@
     top: 50%;
     transform: translateY(-50%);
     z-index: 25;
+    transition: opacity var(--motion-normal) var(--ease-paper),
+                visibility 0s linear var(--motion-normal);
   }
   .side-nav[hidden] { display: none; }
+  /* Hide nav when hero carousel is dominantly in viewport — user
+     hasn't started browsing sections yet, nav would just clutter
+     the editorial cover. Fades back in past hero. */
+  .side-nav.over-hero {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .side-nav:not(.over-hero) {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s, 0s;
+  }
   .side-nav ul {
     list-style: none;
     margin: 0; padding: 0;
@@ -584,11 +599,6 @@
     position: relative;
     z-index: 2;
     margin: 0 auto 0 64px;
-  }
-  /* When side-nav is visible (≥1280px), push hero content past the
-     nav's expanded-label width so they don't overlap on hover/active */
-  @media (min-width: 1280px) {
-    .hero-content { margin-left: 200px; }
   }
   .hero-eyebrow {
     font-family: "JetBrains Mono", monospace;
@@ -3545,6 +3555,29 @@ function attachHeroParallax() {
   }, { passive: true });
 }
 
+let _navHeroObserver = null;
+function attachNavHeroToggle() {
+  const hero = document.getElementById("heroStory");
+  const nav  = document.getElementById("sideNav");
+  if (!hero || !nav) return;
+  // Initial state: hero is visible, nav hidden
+  nav.classList.add("over-hero");
+  if (_navHeroObserver) _navHeroObserver.disconnect();
+  _navHeroObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      // When >25% of hero is in viewport, hide nav. Past that, show it.
+      if (entry.intersectionRatio > 0.25) {
+        nav.classList.add("over-hero");
+      } else {
+        nav.classList.remove("over-hero");
+      }
+    });
+  }, {
+    threshold: [0, 0.1, 0.25, 0.5, 0.75, 1.0],
+  });
+  _navHeroObserver.observe(hero);
+}
+
 function bindEvents() {
   $$(".filter-group").forEach(group => {
     group.addEventListener("click", e => {
@@ -3670,6 +3703,7 @@ async function init() {
   initTheme();
   bindEvents();
   attachHeroParallax();
+  attachNavHeroToggle();
   renderDailyQuote();
   const [ev, pl] = await Promise.all([
     loadJSON("data/events.json"),
