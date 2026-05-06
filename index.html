@@ -131,7 +131,7 @@
   .side-nav button.active .label {
     color: var(--ink);
     width: auto;
-    max-width: 140px;
+    max-width: 110px;
     padding-right: 8px;
   }
   .side-nav button:hover .indicator,
@@ -584,6 +584,11 @@
     position: relative;
     z-index: 2;
     margin: 0 auto 0 64px;
+  }
+  /* When side-nav is visible (≥1280px), push hero content past the
+     nav's expanded-label width so they don't overlap on hover/active */
+  @media (min-width: 1280px) {
+    .hero-content { margin-left: 200px; }
   }
   .hero-eyebrow {
     font-family: "JetBrains Mono", monospace;
