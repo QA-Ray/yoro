@@ -925,6 +925,136 @@ def parse_pia_card(url, body, cat_hint):
     }
 
 
+def guess_cat_kanji_en(title, desc=""):
+    """English-keyword variant of guess_cat_kanji for non-JP sources."""
+    text = (title + " " + desc).lower()
+    EN_KEYWORDS = [
+        (("matsuri", "festival"),                                 "祭り",   "祭"),
+        (("fireworks", "hanabi"),                                 "祭り",   "火"),
+        (("sumo", "marathon", "baseball", "soccer", "tennis",
+          "olympic", "tournament", "rugby", "golf", "basketball"),"スポーツ", "競"),
+        (("concert", "live", "musical", "opera", "jazz",
+          "classical music", "philharmonic", "symphony"),         "音楽",   "響"),
+        (("exhibition", "museum", "gallery", " art ", "art ",
+          "paintings"),                                            "展覧会", "展"),
+        (("cherry blossom", "sakura", "flower", "garden",
+          "blossom", "leaves", "autumn", "winter illumination"),  "自然",   "花"),
+        (("market", "flea", "fair", "fair ", "antique"),          "マーケット", "市"),
+        (("food", "gourmet", "beer", "wine", "coffee",
+          "oktoberfest", "ramen", "sushi"),                       "グルメ", "食"),
+    ]
+    for keywords, cat, kanji in EN_KEYWORDS:
+        if any(kw in text for kw in keywords):
+            return cat, kanji
+    return "その他", "事"
+
+
+_MONTHS_EN = {m: i for i, m in enumerate(
+    ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"], start=1
+)}
+
+
+def parse_en_date(s, today=None):
+    """Parse "Apr 29" → "2026-04-29". Year inferred (next year if past)."""
+    if not today:
+        today = date.today()
+    s = (s or "").strip().lower()
+    m = re.match(r'(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})', s)
+    if not m:
+        return None
+    month = _MONTHS_EN.get(m.group(1))
+    day = int(m.group(2))
+    if not month or not (1 <= day <= 31):
+        return None
+    year = today.year
+    # If parsed month is more than 3 months behind today, roll to next year
+    if month < today.month - 3:
+        year += 1
+    return f"{year}-{month:02d}-{day:02d}"
+
+
+def fetch_tokyo_cheapo():
+    """Tokyo Cheapo — English traveler-oriented Tokyo events.
+
+    Cards are <article class="card--event">…</article> with date,
+    title, excerpt, image, link inline. Yields 20+ events per fetch,
+    all in English (no translation needed).
+    """
+    headers = {
+        "User-Agent": UA,
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    url = "https://tokyocheapo.com/events/"
+    try:
+        r = requests.get(url, headers=headers, timeout=25)
+        r.raise_for_status()
+    except Exception as e:
+        print(f"  [tokyocheapo] {type(e).__name__}: {e}", file=sys.stderr)
+        return []
+
+    cards = re.findall(
+        r'<article[^>]*class="[^"]*card--event[^"]*"[^>]*>(.*?)</article>',
+        r.text, re.DOTALL,
+    )
+    out = []
+    for c in cards:
+        ev = parse_tokyo_cheapo_card(c)
+        if ev:
+            out.append(ev)
+    print(f"  [tokyocheapo] {len(out)} events")
+    return out
+
+
+def parse_tokyo_cheapo_card(card_html):
+    title_m = re.search(r'class="card__title">\s*<a[^>]+>([^<]+)</a>', card_html)
+    if not title_m:
+        return None
+    title = title_m.group(1).strip()
+    if not title:
+        return None
+
+    url_m = re.search(r'class="card__image"[^>]+href="([^"]+)"', card_html)
+    url = (url_m.group(1) if url_m else "").strip()
+    if url.startswith("/"):
+        url = "https://tokyocheapo.com" + url
+
+    excerpt_m = re.search(r'class="card__excerpt">([^<]+)</p>', card_html)
+    excerpt = (excerpt_m.group(1).strip() if excerpt_m else "")[:160]
+
+    img_m = re.search(r'<img[^>]+src="([^"]+)"', card_html)
+    image = (img_m.group(1) if img_m else "").strip()
+
+    raw_dates = re.findall(r'class="date">([^<]+)</div>', card_html)
+    parsed = [parse_en_date(s) for s in raw_dates]
+    parsed = [d for d in parsed if d]
+    if not parsed:
+        return None
+    date_start, date_end = parsed[0], (parsed[1] if len(parsed) > 1 else parsed[0])
+
+    cat, kanji = guess_cat_kanji_en(title, excerpt)
+    # Default to Tokyo unless title hints otherwise (Yokohama / Kamakura / etc)
+    prefecture = guess_prefecture(title) or "東京"
+
+    return {
+        "id": stable_id("tc", url or title),
+        "title_ja": title,         # English passes through both fields
+        "title_zh": title,
+        "category": cat,
+        "kanji": kanji,
+        "date_start": date_start,
+        "date_end": date_end,
+        "prefecture": prefecture,
+        "city": "",
+        "venue": "",
+        "description_ja": excerpt,
+        "description_zh": excerpt,
+        "url": url,
+        "image_url": image,
+        "featured": False,
+        "source": "tokyo_cheapo",
+    }
+
+
 # Add new sources here. Each is (name, fetch_function).
 SOURCES = [
     ("connpass", fetch_connpass),
@@ -933,6 +1063,7 @@ SOURCES = [
     ("bandsintown", fetch_bandsintown),
     ("ticketmaster", fetch_ticketmaster),
     ("pia", fetch_pia),
+    ("tokyo_cheapo", fetch_tokyo_cheapo),
 ]
 
 
