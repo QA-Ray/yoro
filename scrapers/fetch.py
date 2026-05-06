@@ -807,6 +807,124 @@ def parse_ticketmaster_event(ev, cat, kanji):
     }, None)
 
 
+PIA_PAGES = [
+    ("/zh-CHS/event/",  None),         # generic events — let keyword guesser decide cat
+    ("/zh-CHS/sports/", "スポーツ"),    # sports landing page
+    ("/zh-CHS/classic/", "音楽"),       # classical music
+]
+
+
+def fetch_pia():
+    """PIA Tickets (チケットぴあ) Chinese landing pages.
+
+    PIA's HTML uses WOVN.io for client-side JP→ZH swap; our scraper
+    sees the underlying Japanese. Cards are <a><figure><figcaption>
+    <h2>TITLE</h2><p>DESC</p></figcaption></figure></a>. Dates are
+    not in structured form — extracted by regex on description text
+    (looks for 20XX/M/D patterns). Skip events without parseable dates.
+    """
+    headers = {
+        "User-Agent": UA,
+        "Accept-Language": "zh-CN,zh;q=0.9,ja;q=0.8",
+        "Accept": "text/html,application/xhtml+xml",
+    }
+
+    card_re = re.compile(
+        r'<a[^>]+href="(https?://t\.pia\.jp/zh-CHS/pia/events/[^"]+/)"[^>]*>(.*?)</a>',
+        re.DOTALL,
+    )
+
+    out = []
+    for path, cat_hint in PIA_PAGES:
+        url = f"https://t.pia.jp{path}"
+        try:
+            r = requests.get(url, headers=headers, timeout=25)
+            r.raise_for_status()
+        except Exception as e:
+            print(f"  [pia {path}] {type(e).__name__}: {e}", file=sys.stderr)
+            time.sleep(1.5)
+            continue
+
+        seen = set()
+        added = 0
+        for ev_url, body in card_re.findall(r.text):
+            if ev_url in seen:
+                continue
+            seen.add(ev_url)
+            ev = parse_pia_card(ev_url, body, cat_hint)
+            if ev:
+                out.append(ev)
+                added += 1
+        print(f"  [pia {path.rstrip('/').split('/')[-1] or 'home'}] {added} events")
+        time.sleep(1.5)
+
+    return out
+
+
+def parse_pia_card(url, body, cat_hint):
+    title_m = re.search(r'<h2[^>]*>([^<]+)</h2>', body)
+    if not title_m:
+        return None
+    title = title_m.group(1).strip()
+    if not title:
+        return None
+
+    img_m = re.search(r'<img[^>]+src="([^"]+)"', body)
+    image = (img_m.group(1) if img_m else "").strip()
+    if image.startswith("//"):
+        image = "https:" + image
+
+    desc_m = re.search(r'<p[^>]*>([^<]+)</p>', body)
+    desc = (desc_m.group(1).strip() if desc_m else "")[:200]
+
+    # Extract dates from anywhere in card body — accept 2025-2027 only
+    date_matches = re.findall(r'(20\d{2})[/.\-](\d{1,2})[/.\-](\d{1,2})', body)
+    valid_dates = []
+    for y, m, d in date_matches:
+        y, m, d = int(y), int(m), int(d)
+        if not (2025 <= y <= 2027):
+            continue
+        if not (1 <= m <= 12 and 1 <= d <= 31):
+            continue
+        valid_dates.append(f"{y}-{m:02d}-{d:02d}")
+    valid_dates = sorted(set(valid_dates))
+    if not valid_dates:
+        return None  # skip events without parseable dates — pure title without date is noise
+
+    date_start = valid_dates[0]
+    date_end = valid_dates[-1] if len(valid_dates) > 1 else date_start
+
+    # Category: keyword guess on title+desc, then fall back to genre hint
+    cat, kanji = guess_cat_kanji(title, desc[:140])
+    if cat == "その他" and cat_hint:
+        cat = cat_hint
+        kanji = {"スポーツ": "競", "音楽": "響"}.get(cat_hint, "事")
+
+    prefecture = guess_prefecture(title + " " + desc) or "東京"
+
+    title_zh = translate_ja_to_zh(title)
+    desc_zh = translate_ja_to_zh(desc[:140])
+
+    return {
+        "id": stable_id("pia", url),
+        "title_ja": title,
+        "title_zh": title_zh,
+        "category": cat,
+        "kanji": kanji,
+        "date_start": date_start,
+        "date_end": date_end,
+        "prefecture": prefecture,
+        "city": "",
+        "venue": "",
+        "description_ja": desc[:140],
+        "description_zh": desc_zh,
+        "url": url,
+        "image_url": image,
+        "featured": False,
+        "source": "pia",
+    }
+
+
 # Add new sources here. Each is (name, fetch_function).
 SOURCES = [
     ("connpass", fetch_connpass),
@@ -814,6 +932,7 @@ SOURCES = [
     ("walkerplus_genre", fetch_walkerplus_genre),
     ("bandsintown", fetch_bandsintown),
     ("ticketmaster", fetch_ticketmaster),
+    ("pia", fetch_pia),
 ]
 
 
