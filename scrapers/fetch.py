@@ -128,6 +128,78 @@ def filter_future(events):
     ]
 
 
+# ============== Cross-source de-duplication ==============
+
+# Higher number = lower priority. Curated wins. Walkerplus (richest data) next.
+_SOURCE_PRIORITY = {
+    "manual":           0,
+    "walkerplus":       1,
+    "walkerplus_genre": 2,
+    "tokyo_cheapo":     3,
+    "ticketmaster":     4,
+    "pia":              5,
+    "bandsintown":      6,
+    "connpass":         7,
+}
+
+
+def _normalize_title(s):
+    """Strip year, punctuation, whitespace, lowercase. For fuzzy compare."""
+    if not s:
+        return ""
+    s = s.lower()
+    s = re.sub(r'\b(20\d\d|19\d\d)\b', '', s)
+    s = re.sub(r'[\s\-_/&·。、，,.()（）「」【】！!?？:：~～]+', '', s)
+    return s
+
+
+def _date_overlap(a, b):
+    s1, e1 = a.get("date_start", ""), a.get("date_end", "") or a.get("date_start", "")
+    s2, e2 = b.get("date_start", ""), b.get("date_end", "") or b.get("date_start", "")
+    if not s1 or not s2:
+        return False
+    return s1 <= e2 and s2 <= e1
+
+
+def _looks_same_event(a, b):
+    """Two events are likely the same if: same prefecture, dates overlap,
+    and any normalized title (ja or zh) matches or substrings overlap (>=5 chars)."""
+    if a.get("prefecture") != b.get("prefecture"):
+        return False
+    if not _date_overlap(a, b):
+        return False
+    titles_a = {_normalize_title(a.get("title_ja", "")), _normalize_title(a.get("title_zh", ""))}
+    titles_b = {_normalize_title(b.get("title_ja", "")), _normalize_title(b.get("title_zh", ""))}
+    titles_a = {t for t in titles_a if len(t) >= 4}
+    titles_b = {t for t in titles_b if len(t) >= 4}
+    for ta in titles_a:
+        for tb in titles_b:
+            if ta == tb:
+                return True
+            if len(ta) >= 6 and len(tb) >= 6 and (ta in tb or tb in ta):
+                return True
+    return False
+
+
+def merge_dedup(events):
+    """Merge events from multiple sources, dropping fuzzy duplicates.
+    Higher-priority source wins. Returns deduped list."""
+    sorted_events = sorted(
+        events,
+        key=lambda e: _SOURCE_PRIORITY.get(e.get("source", "manual"), 99)
+    )
+    kept = []
+    dropped = 0
+    for ev in sorted_events:
+        if any(_looks_same_event(ev, k) for k in kept):
+            dropped += 1
+            continue
+        kept.append(ev)
+    if dropped:
+        print(f"  ⤵ dedup: dropped {dropped} cross-source duplicates")
+    return kept
+
+
 # ============== Translation (MyMemory, no API key) ==============
 
 TRANSLATIONS_CACHE_FILE = DATA / "translations_cache.json"
@@ -170,11 +242,20 @@ _BAD_TRANS_MARKERS = (
 
 
 def translate_ja_to_zh(text):
-    """Japanese → Simplified Chinese via MyMemory free tier.
+    return translate_to_zh(text, src="ja")
 
-    Caches results to data/translations_cache.json. Returns original text
-    on any failure (rate limit, network, junk response). Set MYMEMORY_EMAIL
-    env var to bump free quota from 1k → 100k chars/day.
+
+def translate_en_to_zh(text):
+    return translate_to_zh(text, src="en")
+
+
+def translate_to_zh(text, src="ja"):
+    """Translate to Simplified Chinese via MyMemory free tier.
+
+    src: "ja" or "en" — picks the langpair sent to the API.
+    Caches results in data/translations_cache.json keyed by text alone
+    (assumes a given source string always maps to the same target).
+    Returns original text on any failure.
     """
     import os
     global _TRANS_SESSION, _TRANS_FAILED
@@ -185,13 +266,14 @@ def translate_ja_to_zh(text):
     if text in cache:
         return cache[text]
     if _TRANS_FAILED:
-        return text  # don't keep hammering after rate limit
+        return text
 
     if _TRANS_SESSION is None:
         _TRANS_SESSION = requests.Session()
 
     email = os.environ.get("MYMEMORY_EMAIL", "").strip()
-    params = {"q": text[:500], "langpair": "ja|zh-CN"}
+    langpair = f"{src}|zh-CN"
+    params = {"q": text[:500], "langpair": langpair}
     if email:
         params["de"] = email
 
@@ -1035,10 +1117,13 @@ def parse_tokyo_cheapo_card(card_html):
     # Default to Tokyo unless title hints otherwise (Yokohama / Kamakura / etc)
     prefecture = guess_prefecture(title) or "東京"
 
+    title_zh = translate_en_to_zh(title)
+    desc_zh = translate_en_to_zh(excerpt)
+
     return {
         "id": stable_id("tc", url or title),
-        "title_ja": title,         # English passes through both fields
-        "title_zh": title,
+        "title_ja": title,         # English original (shown as subtitle if different)
+        "title_zh": title_zh,
         "category": cat,
         "kanji": kanji,
         "date_start": date_start,
@@ -1047,7 +1132,7 @@ def parse_tokyo_cheapo_card(card_html):
         "city": "",
         "venue": "",
         "description_ja": excerpt,
-        "description_zh": excerpt,
+        "description_zh": desc_zh,
         "url": url,
         "image_url": image,
         "featured": False,
@@ -1099,7 +1184,8 @@ def run():
         seen.add(ev["id"])
         deduped.append(ev)
 
-    final = curated_events + deduped
+    # Cross-source fuzzy dedup: same prefecture + date overlap + similar title
+    final = merge_dedup(curated_events + deduped)
     output = {
         "updated_at": date.today().isoformat(),
         "events": final,
