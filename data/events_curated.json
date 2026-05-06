@@ -19,7 +19,8 @@
       "image_url": "",
       "featured": true,
       "hero": true,
-      "season_tag": "今月"
+      "season_tag": "今月",
+      "aliases": ["sanja matsuri", "sanja festival", "sanja"]
     },
     {
       "id": "aoi-2026",
@@ -39,7 +40,8 @@
       "image_url": "",
       "featured": true,
       "hero": true,
-      "season_tag": "千年"
+      "season_tag": "千年",
+      "aliases": ["aoi matsuri", "aoi festival", "hollyhock festival"]
     },
     {
       "id": "yokohama-port-2026",
@@ -59,7 +61,8 @@
       "image_url": "",
       "featured": true,
       "hero": true,
-      "season_tag": "開港"
+      "season_tag": "開港",
+      "aliases": ["yokohama port festival", "kaiko sai", "yokohama opening"]
     },
     {
       "id": "bunkyo-ajisai-2026",
@@ -96,7 +99,8 @@
       "image_url": "",
       "featured": true,
       "hero": true,
-      "season_tag": "梅雨"
+      "season_tag": "梅雨",
+      "aliases": ["kamakura hydrangea", "meigetsuin", "kamakura ajisai", "hydrangea temple"]
     },
     {
       "id": "sapporo-lilac-2026",
@@ -184,7 +188,8 @@
       "image_url": "",
       "featured": true,
       "hero": true,
-      "season_tag": "夏限"
+      "season_tag": "夏限",
+      "aliases": ["kamogawa yuka", "yuka noryosho", "kamogawa noryo", "kyoto riverside dining"]
     },
     {
       "id": "goryokaku-2026",

@@ -163,15 +163,24 @@ def _date_overlap(a, b):
 
 def _looks_same_event(a, b):
     """Two events are likely the same if: same prefecture, dates overlap,
-    and any normalized title (ja or zh) matches or substrings overlap (>=5 chars)."""
+    and any normalized title — including the optional `aliases` array —
+    matches exactly or substrings overlap (>=6 chars)."""
     if a.get("prefecture") != b.get("prefecture"):
         return False
     if not _date_overlap(a, b):
         return False
-    titles_a = {_normalize_title(a.get("title_ja", "")), _normalize_title(a.get("title_zh", ""))}
-    titles_b = {_normalize_title(b.get("title_ja", "")), _normalize_title(b.get("title_zh", ""))}
-    titles_a = {t for t in titles_a if len(t) >= 4}
-    titles_b = {t for t in titles_b if len(t) >= 4}
+
+    def title_set(ev):
+        s = {
+            _normalize_title(ev.get("title_ja", "")),
+            _normalize_title(ev.get("title_zh", "")),
+        }
+        for al in (ev.get("aliases") or []):
+            s.add(_normalize_title(al))
+        return {t for t in s if len(t) >= 4}
+
+    titles_a = title_set(a)
+    titles_b = title_set(b)
     for ta in titles_a:
         for tb in titles_b:
             if ta == tb:
