@@ -244,7 +244,7 @@ def fetch_connpass():
     if api_key:
         params["api_key"] = api_key
 
-    r = requests.get(url, params=params, headers=headers, timeout=15)
+    r = requests.get(url, params=params, headers=headers, timeout=25)
     r.raise_for_status()
     data = r.json()
 
@@ -316,7 +316,7 @@ def fetch_walkerplus():
     for code, pref_name in WALKERPLUS_PREFS:
         url = f"https://www.walkerplus.com/event_list/{code}/"
         try:
-            r = requests.get(url, headers=headers, timeout=15)
+            r = requests.get(url, headers=headers, timeout=25)
             r.raise_for_status()
         except Exception as e:
             print(f"  [walkerplus {pref_name}] {type(e).__name__}: {e}",
@@ -433,7 +433,7 @@ def fetch_walkerplus_genre():
     for code, name, forced_cat, forced_kanji in WALKERPLUS_GENRES:
         url = f"https://www.walkerplus.com/event_list/{code}/"
         try:
-            r = requests.get(url, headers=headers, timeout=15)
+            r = requests.get(url, headers=headers, timeout=25)
             r.raise_for_status()
         except Exception as e:
             print(f"  [walkerplus genre {name}] {type(e).__name__}: {e}",
@@ -637,7 +637,7 @@ def fetch_ticketmaster():
     }
     try:
         r = requests.get(
-            base, params=params, timeout=15,
+            base, params=params, timeout=25,
             headers={"User-Agent": "YoroBot/0.1 (+https://github.com/QA-Ray/yoro)"},
         )
         if r.status_code != 200:
