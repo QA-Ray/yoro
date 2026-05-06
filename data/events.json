@@ -19,7 +19,12 @@
       "image_url": "",
       "featured": true,
       "hero": true,
-      "season_tag": "今月"
+      "season_tag": "今月",
+      "aliases": [
+        "sanja matsuri",
+        "sanja festival",
+        "sanja"
+      ]
     },
     {
       "id": "aoi-2026",
@@ -39,7 +44,12 @@
       "image_url": "",
       "featured": true,
       "hero": true,
-      "season_tag": "千年"
+      "season_tag": "千年",
+      "aliases": [
+        "aoi matsuri",
+        "aoi festival",
+        "hollyhock festival"
+      ]
     },
     {
       "id": "yokohama-port-2026",
@@ -59,7 +69,12 @@
       "image_url": "",
       "featured": true,
       "hero": true,
-      "season_tag": "開港"
+      "season_tag": "開港",
+      "aliases": [
+        "yokohama port festival",
+        "kaiko sai",
+        "yokohama opening"
+      ]
     },
     {
       "id": "bunkyo-ajisai-2026",
@@ -96,7 +111,13 @@
       "image_url": "",
       "featured": true,
       "hero": true,
-      "season_tag": "梅雨"
+      "season_tag": "梅雨",
+      "aliases": [
+        "kamakura hydrangea",
+        "meigetsuin",
+        "kamakura ajisai",
+        "hydrangea temple"
+      ]
     },
     {
       "id": "sapporo-lilac-2026",
@@ -184,7 +205,13 @@
       "image_url": "",
       "featured": true,
       "hero": true,
-      "season_tag": "夏限"
+      "season_tag": "夏限",
+      "aliases": [
+        "kamogawa yuka",
+        "yuka noryosho",
+        "kamogawa noryo",
+        "kyoto riverside dining"
+      ]
     },
     {
       "id": "goryokaku-2026",
@@ -2592,24 +2619,6 @@
       "description_zh": "在银座体验相扑文化和日本美食。",
       "url": "https://tokyocheapo.com/events/ginza-sumo-show-with-dinner/",
       "image_url": "https://cdn.cheapoguides.com/wp-content/uploads/sites/2/2026/02/IMG_0214-1-362x193.jpeg",
-      "featured": false,
-      "source": "tokyo_cheapo"
-    },
-    {
-      "id": "tc-2fea8649e3",
-      "title_ja": "Sanja Matsuri 2026 (Sanja Festival)",
-      "title_zh": "Sanja Matsuri 2026 （ Sanja节）",
-      "category": "祭り",
-      "kanji": "祭",
-      "date_start": "2026-05-15",
-      "date_end": "2026-05-17",
-      "prefecture": "東京",
-      "city": "",
-      "venue": "",
-      "description_ja": "See how wild Asakusa can really get during its most energetic festival of the year.",
-      "description_zh": "了解浅草在一年中最精力充沛的节日里是如何狂欢的。",
-      "url": "https://tokyocheapo.com/events/sanja-matsuri/",
-      "image_url": "https://cdn.cheapoguides.com/wp-content/uploads/sites/2/2015/04/Sanja_Matsuri_1-362x193.jpg",
       "featured": false,
       "source": "tokyo_cheapo"
     },
