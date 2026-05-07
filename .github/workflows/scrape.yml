@@ -2,8 +2,8 @@ name: Daily Event Scrape
 
 on:
   schedule:
-    - cron: '0 21 * * *'   # 06:00 JST (morning refresh)
-    - cron: '0 9 * * *'    # 18:00 JST (evening refresh)
+    - cron: '0 1 * * *'    # 10:00 JST (morning refresh)
+    - cron: '0 11 * * *'   # 20:00 JST (evening refresh)
   workflow_dispatch: {}
 
 permissions:
