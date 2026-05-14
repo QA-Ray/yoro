@@ -4712,6 +4712,10 @@
   /* Show the right glyph depending on current mode (CSS, no JS swap) */
   .view-toggle::before { content: "≡"; font-size: 16px; }
   body:not(.paged-mode) .view-toggle::before { content: "卷"; font-size: 14px; }
+  /* During the closed-book intro the "跳过 ✕" pill already sits at the
+     top-right; hide the toggle there to avoid stacking. It re-appears
+     once the intro dismisses. */
+  body.book-intro-active .view-toggle { opacity: 0; pointer-events: none; }
 
   /* Hide every book-mode-specific element when NOT in paged-mode, so
      the original scrolling site can render cleanly. The .void-backdrop
