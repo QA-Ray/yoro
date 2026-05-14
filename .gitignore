@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+
+# Local agent / IDE state
+.claude/

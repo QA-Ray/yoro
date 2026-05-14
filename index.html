@@ -6,7 +6,8 @@
 <title>YORO · 远方来信｜日本</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;900&family=Noto+Serif+JP:wght@400;600;900&family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;900&family=Noto+Serif+JP:wght@400;600;900&family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Caveat:wght@400;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 <style>
   :root {
     /* Palette · 和纸墨色 */
@@ -189,47 +190,64 @@
   @media (max-width: 1100px) { .spine { display: none; } }
 
   /* ============== Topbar ============== */
+  /* Topbar styled as a printed running head: thin, hairline, all text
+     uppercase / small caps, no chrome. Looks like the top edge of a
+     book page, not a web nav. */
   .topbar {
-    border-bottom: 1px solid var(--line);
-    position: sticky; top: 0; z-index: 50;
-    backdrop-filter: saturate(120%) blur(10px);
-    background: rgba(245, 241, 232, 0.92);
+    position: relative;
+    z-index: 5;
+    padding-top: 36px;     /* the "head margin" of the page */
+    padding-bottom: 18px;
+  }
+  .topbar::after {
+    /* Hairline rule under the running head */
+    content: "";
+    display: block;
+    height: 1px;
+    margin-top: 14px;
+    background: linear-gradient(90deg, transparent, var(--line) 18%, var(--line) 82%, transparent);
   }
   .topbar-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 18px 32px;
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
     gap: 24px;
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
   }
   .brand { display: flex; align-items: baseline; gap: 14px; }
   .brand-logo {
-    font-family: "Noto Serif JP", "Noto Serif SC", serif;
-    font-weight: 900;
-    font-size: 24px;
-    letter-spacing: 0.22em;
+    font-family: "Cormorant Garamond", "Noto Serif SC", serif;
+    font-weight: 600;
+    font-style: italic;
+    font-size: 14px;
+    letter-spacing: 0.18em;
     color: var(--vermillion);
+    text-transform: none;
   }
   .brand-tag {
-    font-size: 11px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
     color: var(--ink-faint);
-    letter-spacing: 0.2em;
+    letter-spacing: 0.28em;
   }
   .topbar-issue {
-    font-size: 11px;
-    color: var(--ink-faint);
-    letter-spacing: 0.18em;
     display: flex;
     align-items: baseline;
-    gap: 10px;
+    gap: 12px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    color: var(--ink-faint);
   }
   .topbar-issue .issue-jp {
     font-family: "Noto Serif JP", serif;
     color: var(--ink);
-    font-size: 13px;
-    letter-spacing: 0.25em;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: none;
   }
   .topbar-issue .issue-num {
     font-family: "JetBrains Mono", monospace;
@@ -288,9 +306,11 @@
   /* ============== Hero Story (multi-page carousel) ============== */
   .hero-story {
     position: relative;
-    border-bottom: 1px solid var(--line);
-    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    background: transparent;
     overflow: hidden;
+    /* Hairline rule at the bottom — closes the chapter-opening spread */
+    border-bottom: 1px solid var(--line-soft);
+    margin-bottom: 32px;
   }
   .hero-pages {
     display: flex;
@@ -304,8 +324,8 @@
   .hero-page {
     flex: 0 0 100%;
     scroll-snap-align: start;
-    min-height: 78vh;
-    padding: 120px 32px 120px;
+    min-height: 56vh;
+    padding: 64px 0 80px;
     display: flex;
     align-items: center;
     position: relative;
@@ -2340,9 +2360,2699 @@
   :root .hero-story {
     transition: background-color var(--motion-normal), color var(--motion-normal);
   }
+
+  /* ====================================================================
+     Book Intro — Cover → TOC spread, horizontal page-turn
+     ==================================================================== */
+  :root {
+    --motion-page: 900ms;
+    --motion-ink: 700ms;
+    --motion-cover: 1400ms;
+    --ease-page-turn: cubic-bezier(.45, .02, .15, 1);
+    --ease-ink:       cubic-bezier(.20, .80, .25, 1);
+    --ease-paper-drop:cubic-bezier(.34, 1.56, .64, 1);
+    --stagger-1: 80ms;
+  }
+  /* While the intro overlay is showing, hide the paged-book chrome
+     (chapter tabs, ribbon, footer) AND the paged book itself via
+     opacity. Using opacity (not visibility) keeps StPageFlip's
+     layout measurements valid during init. The overlay sits on
+     z-index 100 above all of this, so the user only ever sees the
+     closed-book panel until they open it. */
+  body.book-intro-active .book-volume,
+  body.book-intro-active .chapter-tabs,
+  body.book-intro-active .book-ribbon,
+  body.book-intro-active .book-progress,
+  body.book-intro-active .book-margin-title,
+  body.book-intro-active .book-footer {
+    opacity: 0;
+    pointer-events: none;
+  }
+  body.book-intro-active.intro-flipping .book-volume,
+  body.book-intro-active.intro-flipping .chapter-tabs,
+  body.book-intro-active.intro-flipping .book-ribbon,
+  body.book-intro-active.intro-flipping .book-progress,
+  body.book-intro-active.intro-flipping .book-margin-title,
+  body.book-intro-active.intro-flipping .book-footer {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Intro overlay — transparent so the global .void-backdrop (wood
+     grain + morning light) shows through. The paged book underneath
+     is hidden via opacity:0 on .book-volume (set by .book-intro-active
+     on the body), so nothing leaks through. The overlay is at
+     opacity:1 from page load to avoid any fade-in flicker. */
+  .book-intro {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 2400px;
+    perspective-origin: 50% 40%;
+    overflow: hidden;
+    opacity: 1;
+    pointer-events: none;
+  }
+  .book-intro.ready { pointer-events: auto; }
+  /* When closing as part of the open-book flip (intro-flipping is set
+     simultaneously), fade fast so the user sees most of the real
+     StPageFlip page-turn animation. When closing without a flip (skip
+     / escape / TOC row), use a slower fade. */
+  .book-intro.closing {
+    opacity: 0;
+    transition: opacity 700ms var(--ease-ink);
+  }
+  .book-intro.closing.intro-flipping,
+  body.intro-flipping .book-intro.closing {
+    transition: opacity 90ms ease-out;
+  }
+
+  .book-intro-skip {
+    position: absolute;
+    top: 24px; right: 28px;
+    z-index: 5;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: rgba(253, 251, 246, 0.55);
+    padding: 8px 14px;
+    border: 1px solid rgba(253, 251, 246, 0.18);
+    border-radius: 2px;
+    background: transparent;
+    cursor: pointer;
+    transition: color 200ms, border-color 200ms, background 200ms;
+  }
+  .book-intro-skip:hover {
+    color: var(--paper-white);
+    border-color: rgba(253, 251, 246, 0.5);
+    background: rgba(253, 251, 246, 0.06);
+  }
+
+  /* Closed-book stage — sized to match the open-book spread:
+     · height = the paged-book spread height (same formula as .book-flip)
+     · width  = 55% of the open spread's width
+     Open spread is 4:3 landscape; 55% of that width over the same
+     height gives aspect ratio 11:15 (width:height).
+       open_width   = open_height × 4/3
+       closed_width = open_width × 0.55 = open_height × 11/15 */
+  .book-stage {
+    position: relative;
+    height: min(900px, calc((100vw - 80px) * 0.75), calc(100vh - 160px));
+    aspect-ratio: 11 / 15;
+    width: auto;
+    transform-style: preserve-3d;
+    /* Floor shadow — gives the book mass on the desk */
+    filter:
+      drop-shadow(0 22px 32px rgba(0, 0, 0, 0.55))
+      drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+    /* Mouse-driven parallax tilt (set by JS as --mx, --my in [-1, 1]) */
+    transform:
+      rotateX(calc(var(--my, 0) * -3deg))
+      rotateY(calc(var(--mx, 0) * 4deg));
+    transition: transform 600ms var(--ease-paper-drop);
+    will-change: transform;
+  }
+  /* Idle breathing while user hasn't clicked yet */
+  .book-intro:not(.toc-revealed):not(.closing) .book-stage {
+    animation: stage-breathe 6s ease-in-out infinite;
+  }
+  @keyframes stage-breathe {
+    0%, 100% { translate: 0 0; }
+    50%      { translate: 0 -6px; }
+  }
+  /* Settle bounce — fires once after cover finishes flipping */
+  .book-intro.toc-revealed .book-stage {
+    animation: stage-settle 900ms var(--ease-paper-drop) both;
+  }
+  @keyframes stage-settle {
+    0%   { transform:
+              rotateX(calc(var(--my, 0) * -3deg))
+              rotateY(calc(var(--mx, 0) * 4deg))
+              scale(1.02); }
+    40%  { transform:
+              rotateX(calc(var(--my, 0) * -3deg))
+              rotateY(calc(var(--mx, 0) * 4deg))
+              scale(0.992); }
+    70%  { transform:
+              rotateX(calc(var(--my, 0) * -3deg))
+              rotateY(calc(var(--mx, 0) * 4deg))
+              scale(1.004); }
+    100% { transform:
+              rotateX(calc(var(--my, 0) * -3deg))
+              rotateY(calc(var(--mx, 0) * 4deg))
+              scale(1); }
+  }
+
+  /* Closed-book mode: no internal spread pages, no gutter — the cover
+     fills the whole stage so the user sees a closed book sitting on
+     the desk. (.book-page and .book-page-right live in the DOM only
+     to support TOC text for screen readers; hidden visually.) */
+  .book-page,
+  .book-stage::before { display: none; }
+
+  /* Page edge — thin stacked-paper rim on the right side of the closed
+     book, hinting at the pages inside without opening it. */
+  .book-stage::after {
+    content: "";
+    position: absolute;
+    top: 1.5%;
+    bottom: 1.5%;
+    right: -8px;
+    width: 8px;
+    background:
+      linear-gradient(90deg, #ebe5d4 0%, #d9d0bf 50%, #c8bfa8 100%);
+    border-radius: 0 2px 2px 0;
+    box-shadow: 1px 0 0 rgba(43, 36, 24, 0.12);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* === The Cover (now fills the closed-book stage) === */
+  .book-cover {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%;
+    height: 100%;
+    transform-origin: 0% 50%;
+    transform-style: preserve-3d;
+    transition: transform var(--motion-page) var(--ease-page-turn);
+    z-index: 4;
+    cursor: pointer;
+    /* Subtle living breath when waiting */
+    animation: cover-breathe 5.5s ease-in-out infinite;
+  }
+  @keyframes cover-breathe {
+    0%, 100% { transform: rotateY(0) translateZ(0) scale(1); }
+    50%      { transform: rotateY(-1.2deg) translateZ(8px) scale(1.004); }
+  }
+  /* Hover invitation: cover tips slightly toward viewer */
+  .book-cover:hover {
+    animation-play-state: paused;
+    transform: rotateY(-3deg) translateZ(16px);
+    transition: transform 360ms var(--ease-paper-drop);
+  }
+  /* Click anticipation: brief lift before the flip */
+  .book-cover.lifting {
+    animation: none;
+    transform: translateZ(60px) scale(1.025);
+    transition: transform 260ms var(--ease-paper-drop);
+  }
+  /* The flip itself */
+  .book-cover.flipping {
+    animation: none;
+    transform: rotateY(-180deg);
+  }
+  /* Page-curl shadow during flip — a vertical gradient that intensifies
+     mid-flip, simulating the shadow of a bent page */
+  .book-cover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 6;
+    background: linear-gradient(
+      90deg,
+      rgba(0,0,0,0.40) 0%,
+      rgba(0,0,0,0.18) 18%,
+      transparent 50%,
+      rgba(0,0,0,0.10) 80%,
+      rgba(0,0,0,0.32) 100%);
+    opacity: 0;
+    transition: opacity 450ms ease-out;
+    mix-blend-mode: multiply;
+  }
+  .book-cover.flipping::after { opacity: 1; }
+
+  .book-cover-front,
+  .book-cover-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    padding: 12% 14%;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Cover front — cream paper bound book sitting on the desk. The left
+     edge gets a darker band (the bound spine seen from the front);
+     subtle inner shadow gives the cover slight curvature. Matches the
+     paged book's cream title spread so opening feels continuous. */
+  .book-cover-front {
+    background: var(--bg);
+    background-image:
+      /* spine shadow on the left edge (book binding) */
+      linear-gradient(90deg,
+        rgba(43, 36, 24, 0.22) 0%,
+        rgba(43, 36, 24, 0.12) 2.5%,
+        rgba(43, 36, 24, 0.04) 5%,
+        transparent 9%),
+      radial-gradient(circle at 25% 25%, rgba(150, 122, 79, 0.06) 0, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(168, 54, 42, 0.04) 0, transparent 50%);
+    color: var(--ink);
+    box-shadow:
+      inset 0 0 60px rgba(43, 36, 24, 0.06),
+      inset 0 -2px 4px rgba(43, 36, 24, 0.08);
+    border-left: 1px solid rgba(43, 36, 24, 0.18);
+    overflow: hidden;
+    padding: 12% 11% 12% 15%;
+  }
+  /* Slow gold sheen sweep across the closed cover — a sign of "this is real" */
+  .book-cover-front::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    background: linear-gradient(115deg,
+      transparent 35%,
+      rgba(150, 122, 79, 0.18) 50%,
+      transparent 65%);
+    transform: translateX(-60%);
+    animation: sheen-sweep 7s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes sheen-sweep {
+    0%, 100% { transform: translateX(-60%); opacity: 0; }
+    35%      { opacity: 1; }
+    65%      { opacity: 1; }
+    100%     { transform: translateX(60%); opacity: 0; }
+  }
+  .book-cover-back {
+    transform: rotateY(180deg);
+    background: var(--paper-white);
+    background-image:
+      radial-gradient(circle at 50% 50%, rgba(150,122,79,0.04) 0, transparent 60%);
+  }
+
+  /* --- Cover front layout (closed book) --- */
+  .cover-eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    opacity: 0;
+    animation: ci-fade 600ms var(--ease-ink) 1300ms forwards;
+  }
+  .cover-rule {
+    width: 0;
+    height: 1px;
+    background: var(--vermillion);
+    margin: 28px 0 auto;
+    animation: ci-rule 800ms var(--ease-ink) 100ms forwards;
+  }
+  .cover-kanji {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.04em;
+    margin-top: auto;
+  }
+  .cover-kanji span {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: clamp(80px, 14vh, 140px);
+    line-height: 0.92;
+    color: var(--ink);
+    opacity: 0;
+    filter: blur(14px);
+    transform: translateY(-30px);
+    animation:
+      ci-kanji 1100ms var(--ease-paper-drop) forwards,
+      kanji-float 7s ease-in-out 2.4s infinite;
+    text-shadow: 0 2px 12px rgba(43, 36, 24, 0.12);
+  }
+  .cover-kanji span:nth-child(1) { animation-delay: 500ms, 2.4s; }
+  .cover-kanji span:nth-child(2) { animation-delay: 720ms, 3.1s; }
+  @keyframes kanji-float {
+    0%, 100% { translate: 0 0; }
+    50%      { translate: 1px -3px; }
+  }
+  .cover-issue {
+    margin-top: 18px;
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink-soft);
+    opacity: 0;
+    animation: ci-fade 600ms var(--ease-ink) 1500ms forwards;
+  }
+  .cover-cta {
+    margin-top: 32px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    color: var(--vermillion);
+    opacity: 0;
+    animation: ci-pulse 2.4s ease-in-out 2200ms infinite,
+               ci-fade 600ms var(--ease-ink) 1900ms forwards;
+  }
+  .book-cover:hover .cover-cta { color: #d8584b; }
+
+  @keyframes ci-fade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes ci-rule {
+    from { width: 0; }
+    to   { width: 64px; }
+  }
+  @keyframes ci-kanji {
+    0%   { opacity: 0; filter: blur(14px); transform: translateY(-30px) scale(1.08); }
+    60%  { filter: blur(0); }
+    100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+  }
+  @keyframes ci-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+  }
+
+  /* --- Cover back / left title page --- */
+  .toc-title-page {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 14% 12%;
+  }
+  .toc-title-page .tp-eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+  }
+  .toc-title-page .tp-title {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 600;
+    font-size: clamp(56px, 7vw, 88px);
+    color: var(--ink);
+    letter-spacing: 0.4em;
+    margin: 32px 0 12px;
+    text-indent: 0.4em;
+  }
+  .toc-title-page .tp-sub {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+  }
+  .toc-title-page .tp-rule {
+    width: 80px;
+    height: 1px;
+    background: var(--vermillion);
+    margin: 40px auto;
+  }
+  .toc-title-page .tp-meta {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 19px;
+    color: var(--ink-soft);
+  }
+  .toc-title-page .tp-count {
+    margin-top: 16px;
+    font-family: "Noto Serif SC", serif;
+    font-size: 15px;
+    color: var(--ink-soft);
+    letter-spacing: 0.15em;
+  }
+  .toc-title-page .tp-count strong {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 28px;
+    color: var(--vermillion);
+    margin: 0 6px;
+  }
+
+  /* --- TOC right page (chapter list) --- */
+  .toc-list-page {
+    padding: 10% 9% 10% 7%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .toc-list {
+    list-style: none;
+    margin: 0; padding: 0;
+  }
+  .toc-row {
+    display: grid;
+    grid-template-columns: 28px 38px 1fr auto auto 48px;
+    align-items: baseline;
+    gap: 14px;
+    padding: 12px 4px;
+    cursor: pointer;
+    position: relative;
+    opacity: 0;
+    /* Set by JS: --row-idx (0..7) */
+    transition: background 240ms var(--ease-ink), transform 240ms var(--ease-ink);
+  }
+  .book-intro.toc-revealed .toc-row {
+    animation: ci-row-in 820ms var(--ease-paper-drop) forwards;
+    animation-delay: calc(var(--row-idx, 0) * var(--stagger-1) + 200ms);
+  }
+  @keyframes ci-row-in {
+    0%   { opacity: 0;
+           transform: perspective(600px) translate3d(-32px, 6px, -40px) rotateX(8deg); }
+    60%  { opacity: 1; }
+    80%  { transform: perspective(600px) translate3d(2px, 0, 0) rotateX(-1deg); }
+    100% { opacity: 1;
+           transform: perspective(600px) translate3d(0, 0, 0) rotateX(0); }
+  }
+  .toc-row::before {
+    /* Hover highlight, drawn as hairline left ribbon */
+    content: "";
+    position: absolute;
+    left: -14px; top: 6px; bottom: 6px;
+    width: 2px;
+    background: var(--vermillion);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 260ms var(--ease-ink);
+  }
+  .toc-row:hover {
+    transform: translateX(8px) !important;
+    background: linear-gradient(90deg, rgba(168,54,42,0.04), transparent 80%);
+  }
+  .toc-row:hover::before { transform: scaleY(1); }
+  .toc-num {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+  }
+  .toc-kanji {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 28px;
+    color: var(--vermillion);
+    line-height: 1;
+    transform-origin: 50% 100%;
+    transform: perspective(800px) rotateX(-90deg) translateY(-8px);
+    opacity: 0;
+    transition: transform 620ms var(--ease-paper-drop),
+                opacity   500ms var(--ease-ink);
+    text-shadow: 0 0 0 transparent;
+    will-change: transform;
+  }
+  .book-intro.toc-revealed .toc-kanji {
+    transform: perspective(800px) rotateX(0) translateY(0);
+    opacity: 1;
+    transition-delay: calc(var(--row-idx, 0) * var(--stagger-1) + 400ms);
+  }
+  /* Tiny ink-rise on hover — kanji "lifts off the page" */
+  .toc-row:hover .toc-kanji {
+    transform: perspective(800px) rotateX(0) translateY(-3px) scale(1.08);
+    text-shadow: 0 6px 12px rgba(168, 54, 42, 0.25);
+    transition: transform 220ms var(--ease-paper-drop),
+                text-shadow 220ms ease-out;
+  }
+  .toc-dots {
+    height: 1px;
+    background-image: radial-gradient(circle, var(--ink-faint) 1px, transparent 1px);
+    background-size: 6px 1px;
+    background-repeat: repeat-x;
+    background-position: 0 50%;
+    align-self: center;
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 700ms var(--ease-ink);
+  }
+  .book-intro.toc-revealed .toc-dots {
+    clip-path: inset(0 0 0 0);
+    transition-delay: calc(var(--row-idx, 0) * var(--stagger-1) + 500ms);
+  }
+  .toc-name {
+    font-family: "Noto Serif SC", serif;
+    font-size: 18px;
+    color: var(--ink);
+    letter-spacing: 0.2em;
+    white-space: nowrap;
+  }
+  .toc-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+    text-align: right;
+  }
+  .toc-page-no {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-faint);
+    text-align: right;
+  }
+
+  /* --- TOC footer (enter button) --- */
+  .toc-footer {
+    margin-top: 28px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    opacity: 0;
+    transition: opacity 700ms var(--ease-ink);
+    transition-delay: 1.2s;
+  }
+  .book-intro.toc-revealed .toc-footer { opacity: 1; }
+  .toc-footer .total-label {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-faint);
+  }
+  .toc-footer .enter-cta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    color: var(--vermillion);
+    cursor: pointer;
+    padding: 6px 0;
+    transition: letter-spacing 240ms var(--ease-ink);
+  }
+  .toc-footer .enter-cta:hover { letter-spacing: 0.32em; }
+
+  /* --- Mobile / narrow viewport: stack vertically, cover fades out --- */
+  @media (max-width: 760px) {
+    .book-stage {
+      width: 92vw;
+      height: 86vh;
+      filter: drop-shadow(0 14px 28px rgba(0,0,0,0.5));
+    }
+    .book-page { width: 100%; height: 50%; }
+    .book-page-left  { top: 0; left: 0; }
+    .book-page-right { top: 50%; left: 0; right: auto; }
+    .book-stage::before {
+      left: 0; right: 0; width: 100%;
+      top: 50%; bottom: auto;
+      height: 40px;
+      transform: translateY(-50%);
+      background: linear-gradient(180deg,
+        transparent 0%, rgba(43,36,24,0.10) 35%,
+        rgba(43,36,24,0.22) 50%, rgba(43,36,24,0.10) 65%, transparent 100%);
+    }
+    .book-cover {
+      width: 100%; height: 100%;
+      right: 0; top: 0;
+      transform-origin: 50% 50%;
+    }
+    /* Mobile flip = fade + scale (cleaner than rotateX on narrow viewport) */
+    .book-cover {
+      transition: transform var(--motion-page) var(--ease-page-turn),
+                  opacity var(--motion-page) var(--ease-ink);
+    }
+    .book-cover.flipping {
+      transform: scale(0.94);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .book-cover-front,
+    .book-cover-back { padding: 8% 9%; }
+    .cover-kanji span { font-size: clamp(56px, 18vw, 90px); }
+    .cover-eyebrow, .cover-issue { font-size: 10px; }
+    .cover-cta { margin-top: 18px; font-size: 11px; }
+
+    .toc-title-page { padding: 8% 8%; }
+    .toc-title-page .tp-title { font-size: 44px; letter-spacing: 0.3em; }
+    .toc-title-page .tp-rule { margin: 22px auto; }
+    .toc-title-page .tp-meta { font-size: 16px; }
+    .toc-title-page .tp-count { font-size: 13px; }
+    .toc-title-page .tp-count strong { font-size: 22px; }
+
+    .toc-list-page { padding: 5% 6%; justify-content: flex-start; }
+    .toc-list { width: 100%; }
+    .toc-row {
+      grid-template-columns: 22px 30px 1fr auto auto 0;
+      gap: 10px; padding: 6px 2px;
+    }
+    .toc-row .toc-page-no { display: none; }
+    .toc-row .toc-name { font-size: 14px; letter-spacing: 0.12em; }
+    .toc-row .toc-kanji { font-size: 20px; }
+    .toc-row .toc-num { font-size: 13px; }
+    .toc-row .toc-count { font-size: 10px; }
+    .toc-footer { margin-top: 12px; padding-top: 10px; }
+    .toc-footer .total-label { font-size: 12px; }
+    .toc-footer .enter-cta { font-size: 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .book-cover,
+    .toc-row,
+    .toc-kanji,
+    .toc-dots,
+    .toc-footer,
+    .cover-kanji span,
+    .cover-eyebrow,
+    .cover-rule,
+    .cover-issue,
+    .cover-cta {
+      animation-duration: 1ms !important;
+      transition-duration: 1ms !important;
+    }
+    .book-intro,
+    .book-intro.closing { transition-duration: 200ms !important; }
+  }
+
+  /* ====================================================================
+     Permanent book — all content lives on cream pages, dark void around
+     ==================================================================== */
+  html { background: #0e0d0a; }
+  body { background-color: #0e0d0a; }
+  /* === The reading desk at morning ===
+     Walnut desk with crisp horizontal wood grain (turbulence + discrete
+     componentTransfer to posterize the grain into clear bands), lit by
+     soft golden-white morning light from the upper-right window. */
+  .void-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-color: #4a2f1c;   /* warm walnut, brighter for morning */
+    background-image:
+      /* ① Morning light from upper-right — pale golden-white, broad spread.
+            Lower saturation than the dusk-lamp, larger ellipse for daylight feel. */
+      radial-gradient(ellipse 150% 110% at 72% -25%,
+        rgba(255, 245, 215, 0.78) 0%,
+        rgba(250, 230, 180, 0.50) 16%,
+        rgba(230, 200, 150, 0.28) 36%,
+        rgba(180, 145, 105, 0.12) 58%,
+        transparent 80%),
+      /* ② Fine wood grain — smooth fractalNoise (NO posterization).
+            Very low X frequency stretches noise into long horizontal
+            ribbons that look like wood fibers. */
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='1600'><filter id='wood'><feTurbulence type='fractalNoise' baseFrequency='0.0022 0.12' numOctaves='5' seed='6' stitchTiles='stitch'/><feColorMatrix values='0.62 0 0 0 0.18  0 0.36 0 0 0.09  0 0 0.18 0 0.03  0 0 0 1.6 -0.30'/><feComponentTransfer><feFuncA type='gamma' amplitude='1' exponent='0.85' offset='0'/></feComponentTransfer></filter><rect width='100%25' height='100%25' filter='url(%23wood)'/></svg>"),
+      /* ③ Mid-band undulation — wider grain waves for organic flow */
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='2000' height='800'><filter id='w2'><feTurbulence type='fractalNoise' baseFrequency='0.0009 0.045' numOctaves='3' seed='14' stitchTiles='stitch'/><feColorMatrix values='0.50 0 0 0 0.12  0 0.28 0 0 0.06  0 0 0.14 0 0.02  0 0 0 1.3 -0.40'/></filter><rect width='100%25' height='100%25' filter='url(%23w2)'/></svg>"),
+      /* ④ Wide plank breaks — very long, faint horizontal stripes for
+            plank-to-plank transitions */
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='2400' height='1200'><filter id='w3'><feTurbulence type='fractalNoise' baseFrequency='0.0005 0.012' numOctaves='2' seed='21' stitchTiles='stitch'/><feColorMatrix values='0.35 0 0 0 0.08  0 0.20 0 0 0.04  0 0 0.10 0 0.01  0 0 0 0.9 -0.30'/></filter><rect width='100%25' height='100%25' filter='url(%23w3)'/></svg>"),
+      /* ④ Pale dust motes lit by the morning sun */
+      radial-gradient(circle, rgba(255,245,215,0.32) 1px, transparent 1.5px),
+      radial-gradient(circle, rgba(255,225,180,0.22) 1px, transparent 1.5px);
+    background-size:
+      100% 100%,
+      1600px 1600px,
+      2000px 800px,
+      2400px 1200px,
+      320px 320px, 540px 540px;
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0 0, 160px 220px;
+    background-repeat:
+      no-repeat,
+      repeat, repeat, repeat,
+      repeat, repeat;
+    background-blend-mode:
+      screen,
+      multiply, multiply, multiply,
+      screen, screen;
+  }
+  /* Slow candle-flicker on the top-right lamp (visible breath) */
+  .void-backdrop::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse 55% 45% at 80% -5%,
+      rgba(255, 195, 110, 0.14) 0%, transparent 65%);
+    animation: candle-flicker 9s ease-in-out infinite;
+    mix-blend-mode: screen;
+  }
+  @keyframes candle-flicker {
+    0%, 100% { opacity: 0.85; }
+    32%      { opacity: 1.05; }
+    58%      { opacity: 0.78; }
+    74%      { opacity: 0.95; }
+  }
+
+  /* The book itself — cream pages floating on the dark table.
+     The padding sets the inner page margins (white space around
+     the text block — what makes a page feel like a "book page"
+     rather than just a "wide div"). */
+  .book-volume {
+    --page-margin-x: clamp(28px, 5vw, 80px);
+    --page-margin-y: clamp(20px, 3vw, 40px);
+    position: relative;
+    z-index: 1;
+    max-width: 1240px;
+    margin: 32px auto 48px;
+    padding: 0 var(--page-margin-x);
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 25% 25%, rgba(150, 122, 79, 0.04) 0, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(168, 54, 42, 0.03) 0, transparent 50%);
+    box-shadow:
+      /* Stacked-paper edges (book has thickness) */
+      -2px 0 0 #ebe5d4,
+       2px 0 0 #ebe5d4,
+      -4px 0 0 #d9d0bf,
+       4px 0 0 #d9d0bf,
+      -6px 0 0 #c8bfa8,
+       6px 0 0 #c8bfa8,
+      /* Hairline edge + drop shadow on the table */
+      0 0 0 1px rgba(43, 36, 24, 0.04),
+      0 30px 60px -10px rgba(0, 0, 0, 0.55),
+      0 80px 120px -30px rgba(0, 0, 0, 0.4);
+  }
+  /* In paged mode, the book IS the flip frame. Strip everything else so
+     no cream paper extends beyond the actual flippable region. */
+  body.paged-mode .book-volume {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    max-width: none;
+  }
+  /* In paged mode the standalone topbar is gone — its content is printed
+     into each page as a running head (see .running-head below). */
+  body.paged-mode .book-volume > .topbar { display: none; }
+  /* Side-nav and the old horizontal spine are made redundant by the new
+     left vertical title + right progress rail; hide them. */
+  body.paged-mode .side-nav,
+  body.paged-mode .spine { display: none !important; }
+
+  /* === Left margin · vertical issue title === */
+  .book-margin-title {
+    position: fixed;
+    left: clamp(20px, 2.5vw, 44px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 4;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    user-select: none;
+    pointer-events: none;
+    display: none;
+    font-family: "Noto Serif JP", "Noto Serif SC", serif;
+    font-weight: 500;
+    font-size: 16px;
+    letter-spacing: 0.85em;
+    color: rgba(245, 225, 188, 0.72);
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+    line-height: 1;
+  }
+  body.paged-mode .book-margin-title { display: block; }
+  .book-margin-title .mt-dot {
+    color: var(--vermillion);
+    font-size: 18px;
+    opacity: 0.9;
+    text-shadow: 0 0 10px rgba(168, 54, 42, 0.5);
+  }
+  .book-margin-title .mt-year {
+    font-size: 13px;
+    letter-spacing: 0.65em;
+    color: rgba(245, 225, 188, 0.55);
+  }
+  .book-margin-title .mt-roman {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    color: rgba(245, 225, 188, 0.62);
+    text-orientation: sideways;
+  }
+
+  /* Override progress rail to be more visible */
+  .book-progress {
+    background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(245, 225, 188, 0.40) 6%,
+      rgba(245, 225, 188, 0.40) 94%,
+      transparent 100%) !important;
+  }
+  .book-progress-cap {
+    color: rgba(245, 225, 188, 0.70) !important;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+  }
+  .book-progress-marker {
+    width: 10px !important;
+    height: 10px !important;
+    left: -4.5px !important;
+    box-shadow:
+      0 0 20px rgba(168, 54, 42, 0.85),
+      0 0 6px rgba(168, 54, 42, 1.0) !important;
+  }
+
+  /* === Inline book TOC (printed inside the book, not the intro overlay) === */
+  .book-toc-header {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    text-align: center;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .book-toc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+  }
+  .book-toc-row {
+    display: grid;
+    grid-template-columns: 26px 32px 1fr auto 56px;
+    align-items: baseline;
+    gap: 14px;
+    padding: 9px 4px;
+    cursor: pointer;
+    position: relative;
+    transition: background 240ms var(--ease-ink), transform 240ms var(--ease-ink);
+  }
+  .book-toc-row + .book-toc-row {
+    border-top: 1px dotted var(--line-soft);
+  }
+  .book-toc-row::before {
+    content: "";
+    position: absolute;
+    left: -14px; top: 6px; bottom: 6px;
+    width: 2px;
+    background: var(--vermillion);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 260ms var(--ease-ink);
+  }
+  .book-toc-row:hover {
+    background: linear-gradient(90deg, rgba(168,54,42,0.04), transparent 80%);
+    transform: translateX(6px);
+  }
+  .book-toc-row:hover::before { transform: scaleY(1); }
+  .book-toc-row__num {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-faint);
+  }
+  .book-toc-row__kanji {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 22px;
+    color: var(--vermillion);
+    line-height: 1;
+    transition: transform 220ms var(--ease-paper-drop);
+  }
+  .book-toc-row:hover .book-toc-row__kanji {
+    transform: translateY(-2px);
+    text-shadow: 0 6px 12px rgba(168, 54, 42, 0.22);
+  }
+  .book-toc-row__name {
+    font-family: "Noto Serif SC", serif;
+    font-size: 15px;
+    color: var(--ink);
+    letter-spacing: 0.18em;
+    white-space: nowrap;
+  }
+  .book-toc-row__count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.10em;
+    text-align: right;
+  }
+  .book-toc-row__page {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-faint);
+    text-align: right;
+  }
+
+  /* Filter chips (under the chapter list on TOC recto) */
+  .book-toc-filters {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .book-toc-filters-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .book-toc-filters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .book-toc-filter {
+    font-family: "Noto Serif SC", serif;
+    font-size: 11px;
+    padding: 3px 9px;
+    border: 1px solid var(--line);
+    border-radius: 1px;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 200ms var(--ease-ink);
+    letter-spacing: 0.08em;
+  }
+  .book-toc-filter:hover { border-color: var(--ink-soft); color: var(--ink); }
+  .book-toc-filter.active {
+    background: var(--vermillion);
+    border-color: var(--vermillion);
+    color: var(--paper-white);
+  }
+
+  /* Inline TOC verso (left page) — the half-title for the TOC */
+  .book-toc-cover {
+    margin: auto;
+    text-align: center;
+    padding: 0 16px;
+  }
+  .book-toc-cover__title {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 600;
+    font-size: clamp(52px, 7vw, 80px);
+    color: var(--ink);
+    letter-spacing: 0.4em;
+    text-indent: 0.4em;
+    margin-bottom: 12px;
+  }
+  .book-toc-cover__sub {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 17px;
+    color: var(--ink-soft);
+    letter-spacing: 0.18em;
+  }
+  .book-toc-cover__rule {
+    width: 64px;
+    height: 1px;
+    background: var(--vermillion);
+    margin: 32px auto;
+  }
+  .book-toc-cover__count {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+  }
+
+  /* === Right margin · page progress rail === */
+  .book-progress {
+    position: fixed;
+    right: clamp(24px, 2.8vw, 56px);
+    top: 20%;
+    bottom: 20%;
+    width: 1px;
+    z-index: 4;
+    pointer-events: none;
+    display: none;
+    background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(235, 215, 175, 0.22) 6%,
+      rgba(235, 215, 175, 0.22) 94%,
+      transparent 100%);
+  }
+  /* Hidden by default — thumb tabs replace it. Re-enable here if wanted. */
+  /* body.paged-mode .book-progress { display: block; } */
+
+  /* === Fore-edge thumb tabs · chapter quick-jump === */
+  .chapter-tabs {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 6;
+    display: none;
+    flex-direction: column;
+    gap: 3px;
+    align-items: flex-end;
+  }
+  body.paged-mode .chapter-tabs { display: flex; }
+  .chapter-tab {
+    --tab-color: var(--vermillion);
+    width: 30px;
+    height: 52px;
+    padding: 0;
+    border: none;
+    border-radius: 3px 0 0 3px;
+    background: var(--tab-color);
+    color: rgba(253, 251, 246, 0.95);
+    cursor: pointer;
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      -1px 2px 4px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px rgba(255, 255, 255, 0.12),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.18);
+    transition:
+      transform 280ms var(--ease-paper-drop),
+      width 280ms var(--ease-paper-drop),
+      filter 200ms;
+    position: relative;
+    transform: translateX(0);
+  }
+  .chapter-tab:hover {
+    transform: translateX(-10px);
+    filter: brightness(1.12);
+  }
+  .chapter-tab.active {
+    width: 40px;
+    transform: translateX(-12px);
+    font-size: 19px;
+    box-shadow:
+      -2px 3px 8px rgba(0, 0, 0, 0.45),
+      inset 0 1px 1px rgba(255, 255, 255, 0.18),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.20);
+  }
+  .chapter-tab.active::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 18px;
+    background: rgba(253, 251, 246, 0.85);
+    border-radius: 1px;
+  }
+  /* Chapter colors (match postcard stamps) */
+  .chapter-tab[data-chapter="toc"]      { --tab-color: #5b4a32; }
+  .chapter-tab[data-chapter="featured"] { --tab-color: #2a1a10; }
+  .chapter-tab[data-chapter="nature"]   { --tab-color: #5c6b4f; }
+  .chapter-tab[data-chapter="food"]     { --tab-color: #967a4f; }
+  .chapter-tab[data-chapter="matsuri"]  { --tab-color: #a8362a; }
+  .chapter-tab[data-chapter="live"]     { --tab-color: #8b3a4e; }
+  .chapter-tab[data-chapter="art"]      { --tab-color: #4a4675; }
+  .chapter-tab[data-chapter="sports"]   { --tab-color: #3d6691; }
+  .chapter-tab .tab-key {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 7px;
+    font-weight: 400;
+    opacity: 0.55;
+    letter-spacing: 0;
+  }
+  @media (max-width: 760px) {
+    body.paged-mode .chapter-tabs { display: none; }
+  }
+  .book-progress-cap {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: rgba(235, 215, 175, 0.48);
+  }
+  .book-progress-cap--top { top: -22px; }
+  .book-progress-cap--bot {
+    bottom: -22px;
+    font-family: "Noto Serif JP", serif;
+    font-style: normal;
+    font-size: 10px;
+  }
+  .book-progress-marker {
+    position: absolute;
+    left: -3.5px;
+    top: 0%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--vermillion);
+    box-shadow:
+      0 0 14px rgba(168, 54, 42, 0.65),
+      0 0 4px rgba(168, 54, 42, 0.9);
+    transition: top 760ms cubic-bezier(.45, .02, .15, 1);
+  }
+  /* Mobile: hide margin chrome (no room) */
+  @media (max-width: 900px) {
+    body.paged-mode .book-margin-title,
+    body.paged-mode .book-progress { display: none !important; }
+  }
+
+  /* === Silk ribbon bookmark · click to jump back to TOC ===
+     Anchored inside .book-pages-frame (re-parented in JS) so it hangs
+     from the book's actual top edge regardless of viewport height —
+     the book is flex-centered, so its top moves with the viewport.
+     The top calc mirrors the book-flip height formula so the ribbon
+     sits 8px above the top of the book. */
+  .book-ribbon {
+    position: absolute;
+    top: calc((100% - min(900px, (100vw - 80px) * 0.75, 100vh - 160px)) / 2 - 8px);
+    left: calc(50% - 16px);     /* slightly left of the centerline (gutter) */
+    width: 22px;
+    height: 80px;
+    z-index: 8;
+    cursor: pointer;
+    pointer-events: auto;
+    display: none;
+    background: linear-gradient(180deg,
+      #8a2718 0%,
+      #a8362a 40%,
+      #b3493d 75%,
+      #872617 100%);
+    box-shadow:
+      0 4px 14px rgba(168, 54, 42, 0.40),
+      inset -1px 0 0 rgba(0, 0, 0, 0.25),
+      inset 1px 0 0 rgba(255, 255, 255, 0.10);
+    transform-origin: top center;
+    transition: height 320ms var(--ease-paper-drop),
+                filter 220ms,
+                transform 320ms var(--ease-paper-drop);
+    /* Frayed bottom edge */
+    clip-path: polygon(
+      0 0, 100% 0,
+      100% 86%, 78% 96%, 56% 88%, 34% 96%, 12% 86%, 0 92%
+    );
+  }
+  body.paged-mode .book-ribbon { display: block; }
+  /* Hide when on TOC pages themselves (set via JS) */
+  body.paged-mode.on-toc .book-ribbon {
+    transform: translateY(-110%);
+    opacity: 0;
+  }
+  .book-ribbon:hover {
+    height: 132px;
+    filter: brightness(1.08) saturate(1.1);
+  }
+  .book-ribbon::after {
+    content: "目";
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 11px;
+    color: rgba(253, 251, 246, 0.92);
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  }
+  @media (max-width: 760px) {
+    .book-ribbon { left: 75%; height: 88px; width: 18px; }
+    .book-ribbon:hover { height: 100px; }
+  }
+
+  /* ====================================================================
+     The Postcard — event detail = a card "flown out" from the book onto
+     the desk. Front: photo + title + stamp. Back: handwritten notes +
+     postmark + outbound link. Click to flip; outside-click / ESC to close.
+     ==================================================================== */
+  .postcard-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 14, 8, 0);
+    backdrop-filter: blur(0) brightness(1);
+    pointer-events: none;
+    transition: background 380ms ease, backdrop-filter 380ms ease;
+    perspective: 2400px;
+  }
+  .postcard-stage.open {
+    pointer-events: auto;
+    background: rgba(20, 14, 8, 0.45);
+    backdrop-filter: blur(5px) brightness(0.7);
+  }
+  .postcard {
+    position: relative;
+    width: min(420px, 90vw);
+    aspect-ratio: 2 / 3;
+    transform-style: preserve-3d;
+    cursor: pointer;
+    /* Initial offstage: dot small, dropped in from above with rotation */
+    transform:
+      translate(var(--from-x, 0), var(--from-y, 0))
+      scale(0.05)
+      rotate(-12deg);
+    opacity: 0;
+    transition:
+      transform 720ms cubic-bezier(.34, 1.56, .64, 1),
+      opacity 380ms ease-out;
+  }
+  .postcard-stage.open .postcard {
+    transform: translate(0, 0) scale(1) rotate(1.8deg);
+    opacity: 1;
+  }
+  .postcard-stage.open .postcard.flipped {
+    transform: translate(0, 0) scale(1) rotate(1.8deg) rotateY(180deg);
+    transition: transform 800ms cubic-bezier(.45, .02, .15, 1);
+  }
+  .postcard-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background: #f7eed8;
+    background-image:
+      radial-gradient(circle at 25% 20%, rgba(150,122,79,0.05) 0, transparent 50%),
+      radial-gradient(circle at 75% 85%, rgba(168,54,42,0.04) 0, transparent 55%);
+    border-radius: 4px;
+    box-shadow:
+      0 0 0 1px rgba(43, 36, 24, 0.10),
+      0 14px 40px rgba(0, 0, 0, 0.45),
+      0 30px 80px -10px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .postcard-face--back { transform: rotateY(180deg); }
+
+  /* ─── Front face ─── */
+  .postcard-img {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    background: var(--bg-deep) center/cover no-repeat;
+    border-radius: 2px;
+    margin-bottom: 16px;
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.18);
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Placeholder when no image — chapter-coloured tile with kanji watermark */
+  .postcard-img--empty {
+    background: linear-gradient(135deg,
+      var(--stamp-color),
+      color-mix(in srgb, var(--stamp-color) 60%, #000));
+  }
+  .postcard-img-kanji {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 110px;
+    line-height: 1;
+    color: rgba(253, 251, 246, 0.22);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Short description preview on front (so it isn't empty when no image) */
+  .postcard-front-desc {
+    font-family: "Noto Serif SC", serif;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .postcard-title {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 600;
+    font-size: 19px;
+    line-height: 1.35;
+    color: var(--ink);
+    margin: 0 0 6px 0;
+  }
+  .postcard-title-jp {
+    font-family: "Noto Serif JP", serif;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .postcard-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .postcard-meta-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--line-soft);
+  }
+
+  /* Chapter-coloured stamps — set --stamp-color in JS per event */
+  .postcard {
+    --stamp-color: var(--vermillion);
+    --stamp-text: var(--paper-white);
+  }
+  .postcard[data-chapter="featured"] { --stamp-color: #2a1a10; }
+  .postcard[data-chapter="nature"]   { --stamp-color: #5c6b4f; }
+  .postcard[data-chapter="food"]     { --stamp-color: #967a4f; }
+  .postcard[data-chapter="matsuri"]  { --stamp-color: #a8362a; }   /* default vermillion */
+  .postcard[data-chapter="live"]     { --stamp-color: #8b3a4e; }
+  .postcard[data-chapter="art"]      { --stamp-color: #4a4675; }
+  .postcard[data-chapter="sports"]   { --stamp-color: #3d6691; }
+
+  /* Stamp (朱印) — bottom-right of front face */
+  .postcard-stamp {
+    position: absolute;
+    bottom: 28px;
+    right: 24px;
+    width: 52px;
+    height: 52px;
+    background: var(--stamp-color);
+    color: var(--stamp-text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    transform: rotate(-6deg);
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.30),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.15),
+      0 2px 4px rgba(168, 54, 42, 0.3);
+    border-radius: 1px;
+  }
+  .postcard-stamp-k {
+    font-size: 22px;
+    line-height: 1;
+  }
+  .postcard-stamp-s {
+    font-size: 8px;
+    opacity: 0.78;
+    margin-top: 3px;
+    letter-spacing: 0.18em;
+  }
+
+  /* ─── Back face ─── */
+  .postcard-back-header {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+  }
+  .postcard-back-venue {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .postcard-back-meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.16em;
+    margin-bottom: 14px;
+  }
+  .postcard-back-desc {
+    /* Handwritten feel — Caveat for Latin, Ma Shan Zheng for Chinese */
+    font-family: "Ma Shan Zheng", "Caveat", "Noto Serif SC", serif;
+    font-size: 18px;
+    line-height: 1.65;
+    color: var(--ink);
+    flex: 1;
+    overflow: hidden;
+    /* Slight skew to feel hand-written, not printed */
+    transform: rotate(-0.4deg);
+  }
+  .postcard-back-link {
+    display: inline-block;
+    margin-top: 12px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--stamp-color);
+    letter-spacing: 0.18em;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 1px;
+    align-self: flex-start;
+    transition: filter 200ms;
+  }
+  .postcard-back-link:hover { filter: brightness(1.3); }
+
+  /* Postmark circle — bottom-right of back face. Color matches chapter stamp. */
+  .postcard-postmark {
+    position: absolute;
+    bottom: 24px;
+    right: 26px;
+    width: 72px;
+    height: 72px;
+    border: 1.5px solid var(--stamp-color);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--stamp-color);
+    opacity: 0.55;
+    transform: rotate(-9deg);
+    box-shadow: inset 0 0 0 1px currentColor;
+    pointer-events: none;
+  }
+  .postcard-postmark::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px dashed currentColor;
+    border-radius: 50%;
+    opacity: 0.4;
+  }
+  .postcard-postmark-place {
+    font-family: "Noto Serif JP", serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+  }
+  .postcard-postmark-date {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8px;
+    letter-spacing: 0.08em;
+    margin-top: 1px;
+  }
+
+  /* Favorite button — top-left of postcard.
+     A small wax-seal style action: outlined-pill when unsaved (a deliberate
+     invitation), filled chapter-color circle when saved (a confident
+     "marked"). Visually distinct from the utility-style close button so
+     the two never read as the same control. */
+  .postcard-save {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    height: 30px;
+    padding: 0 12px 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(253, 251, 246, 0.55);
+    border: 1px solid rgba(43, 36, 24, 0.18);
+    border-radius: 999px;
+    color: rgba(43, 36, 24, 0.62);
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+    transition:
+      background 220ms,
+      color 220ms,
+      border-color 220ms,
+      transform 240ms var(--ease-paper-drop),
+      box-shadow 240ms;
+  }
+  .postcard-save .pcs-icon {
+    font-size: 14px;
+    line-height: 1;
+    color: rgba(43, 36, 24, 0.55);
+    transition: color 220ms, transform 320ms var(--ease-paper-drop);
+  }
+  .postcard-save:hover {
+    background: rgba(253, 251, 246, 0.85);
+    border-color: var(--stamp-color, var(--vermillion));
+    color: var(--stamp-color, var(--vermillion));
+    transform: translateY(-1px);
+  }
+  .postcard-save:hover .pcs-icon { color: var(--stamp-color, var(--vermillion)); }
+  /* Saved state — pill fills with chapter color, ★ pops in, gentle glow */
+  .postcard.saved .postcard-save {
+    background: var(--stamp-color, var(--vermillion));
+    border-color: var(--stamp-color, var(--vermillion));
+    color: var(--paper-white);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--stamp-color, var(--vermillion)) 35%, transparent);
+  }
+  .postcard.saved .postcard-save .pcs-icon {
+    color: var(--paper-white);
+    transform: scale(1.15);
+  }
+  /* Toggle text + icon glyph based on saved state */
+  .postcard-save .saved-state { display: none; }
+  .postcard.saved .postcard-save .open-state { display: none; }
+  .postcard.saved .postcard-save .saved-state { display: inline; }
+
+  /* Saved-postcards counter — integrated INTO the book-footer (3rd segment)
+     so it never overflows the book when viewport is narrow. */
+  .book-footer-saved {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    color: rgba(214, 195, 165, 0.62);
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.16em;
+  }
+  .book-footer-saved.has-items { display: inline-flex; }
+  .book-footer-saved .star {
+    color: var(--vermillion);
+    font-style: normal;
+    font-size: 14px;
+  }
+  .book-footer-saved .accent {
+    color: var(--vermillion);
+    font-family: "Noto Serif JP", serif;
+    font-style: normal;
+    font-weight: 900;
+    font-size: 15px;
+    margin: 0 2px;
+  }
+
+  /* ====================================================================
+     Region filter bar — persistent two-row strip pinned to the viewport
+     bottom (position:fixed so it doesn't compress .book-volume's flex
+     layout). First row = regions (always). Second row = the prefectures
+     in the active region (shown only when a region is selected).
+     Saved-only toggle lives at the far right of row 1.
+     ==================================================================== */
+  .region-bar {
+    position: fixed;
+    left: 0; right: 0;
+    top: 8px;                /* lives along the top edge of the viewport */
+    z-index: 20;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 14px;
+    width: auto;
+    max-width: calc(min(1200px, (100vh - 160px) * 1.333) + 24px);
+    margin: 0 auto;
+    box-sizing: border-box;
+    user-select: none;
+    pointer-events: auto;
+  }
+  body.paged-mode .region-bar { display: flex; }
+  body.book-intro-active .region-bar { opacity: 0; pointer-events: none; }
+
+  .region-bar__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    /* hide scrollbar (chips wrap horizontally on narrow screens) */
+    scrollbar-width: none;
+  }
+  .region-bar__row::-webkit-scrollbar { display: none; }
+
+  .region-bar__row--prefectures {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      max-height 320ms var(--ease-paper-drop),
+      opacity 220ms ease-out;
+  }
+  .region-bar.has-prefectures .region-bar__row--prefectures {
+    max-height: 40px;
+    opacity: 1;
+  }
+
+  /* Label (eyebrow style — matches printed-book footer aesthetic).
+     Colors are CREAM-toned because the bar floats over the dark wood
+     desk, not over cream paper — ink-faint dark text would disappear. */
+  .region-bar__label {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: rgba(241, 225, 189, 0.55);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .region-bar__divider {
+    color: rgba(241, 225, 189, 0.4);
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  .region-bar__chips {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+  /* Push the saved toggle to the far right of row 1 */
+  .region-bar__saved {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  /* Individual chip — typeset pill, not a UI button.
+     2px radius keeps the typographic feel; no shadows, no fills until
+     active. */
+  .region-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 4px 10px;
+    background: rgba(20, 14, 8, 0.25);
+    border: 1px solid rgba(241, 225, 189, 0.18);
+    border-radius: 2px;
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-size: 11px;
+    color: rgba(241, 225, 189, 0.85);
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background 200ms, color 200ms, border-color 200ms;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .region-chip__count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    color: rgba(241, 225, 189, 0.5);
+    letter-spacing: 0.05em;
+    transition: color 200ms;
+  }
+  .region-chip:hover {
+    background: rgba(168, 54, 42, 0.18);
+    color: #f1e1bd;
+    border-color: rgba(168, 54, 42, 0.55);
+  }
+  .region-chip:hover .region-chip__count { color: rgba(241, 225, 189, 0.85); }
+  .region-chip.is-active {
+    background: var(--vermillion);
+    border-color: var(--vermillion);
+    color: var(--paper-white);
+  }
+  .region-chip.is-active .region-chip__count { color: rgba(253, 251, 246, 0.75); }
+
+  /* Saved toggle uses the same chip styling for visual consistency */
+  .region-chip--saved .region-chip__star {
+    font-size: 11px;
+  }
+
+  /* Narrow viewports — drop the eyebrow labels to give chips more room */
+  @media (max-width: 900px) {
+    .region-bar__label { display: none; }
+    .region-bar__divider { display: none; }
+    .region-bar { padding: 0 8px; }
+  }
+
+  /* Close button — top-right of postcard.
+     Pure utility, kept deliberately quiet (small × in ink-faint with
+     no chrome) so it doesn't compete with the favorite pill. Hover
+     spins to vermillion as a small acknowledgment. */
+  .postcard-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 22px; height: 22px;
+    background: none;
+    border: none;
+    color: rgba(43, 36, 24, 0.40);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 10;
+    transition: color 200ms, transform 220ms;
+  }
+  .postcard-close:hover {
+    color: var(--vermillion);
+    transform: rotate(90deg);
+  }
+  .postcard-flip-hint {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    color: rgba(43, 36, 24, 0.4);
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  /* Mobile: shrink postcard */
+  @media (max-width: 760px) {
+    .postcard {
+      width: min(360px, 88vw);
+    }
+    .postcard-face { padding: 18px; }
+    .postcard-title { font-size: 17px; }
+    .postcard-back-desc { font-size: 16px; }
+    .postcard-stamp { width: 44px; height: 44px; bottom: 22px; right: 20px; }
+    .postcard-stamp-k { font-size: 18px; }
+    .postcard-postmark { width: 60px; height: 60px; bottom: 18px; right: 22px; }
+  }
+
+  /* Running head — the masthead printed at the top of every content page.
+     Verso (left page): book/issue title. Recto (right page): chapter. */
+  .running-head {
+    position: absolute;
+    top: 24px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    z-index: 2;
+    white-space: nowrap;
+  }
+  .running-head--left  { left:  clamp(36px, 4vw, 64px); }
+  .running-head--right { right: clamp(36px, 4vw, 64px); }
+  .running-head .accent {
+    color: var(--vermillion);
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0.14em;
+    margin-right: 10px;
+  }
+  /* Hairline under the running head — a printed-page rule */
+  .page--has-runhead::before {
+    content: "";
+    position: absolute;
+    top: 50px;
+    left: clamp(36px, 4vw, 64px);
+    right: clamp(36px, 4vw, 64px);
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent, var(--line-soft) 18%, var(--line-soft) 82%, transparent);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .page--has-runhead { padding-top: 78px !important; }
+  /* Mobile: tighten page margins so content doesn't get crushed */
+  @media (max-width: 760px) {
+    .book-volume {
+      --page-margin-x: 18px;
+    }
+  }
+
+  /* ====================================================================
+     M1 — Paged book. No vertical scroll. Spreads turn horizontally.
+     ==================================================================== */
+  body.paged-mode { overflow: hidden; height: 100vh; }
+  body.paged-mode .book-volume {
+    position: fixed;
+    /* Region filter bar lives at top: 8px with ~36px height (1 row).
+       Push book-volume down by ~60px so it never overlaps the bar.
+       Bottom keeps ~56px so the printed footer (chapter label + folio)
+       stays fully visible above the viewport edge. */
+    top: 60px;
+    bottom: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(1240px, calc(100% - 64px));
+    max-width: none;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Hide every old vertical-scrolling section while in paged mode */
+  body.paged-mode .book-volume > .hero-story,
+  body.paged-mode .book-volume > .season-strip,
+  body.paged-mode .book-volume > .filters-wrap,
+  body.paged-mode .book-volume > .tabs-wrap,
+  body.paged-mode .book-volume > #mainContent,
+  body.paged-mode .book-volume > footer { display: none; }
+
+  /* The paged engine: powered by StPageFlip — handles 3D paper physics,
+     corner-curl, shadows, mouse/touch drag. The book "is" the flip frame,
+     so the cream paper + stacked-edge thickness + drop shadow all live
+     here, sized to a fixed spread aspect so the flippable region matches
+     the visible cream area exactly. */
+  .book-pages-frame {
+    flex: 1;
+    position: relative;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Outer padding gives the book some breathing room from topbar / footer */
+    padding: 16px 0;
+  }
+  .book-flip {
+    position: relative;
+    /* StPageFlip enforces 4:3 via padding-bottom:75%, so the rendered
+       height = 75% of width. Cap max-width via three constraints:
+         · explicit 1200px ceiling
+         · horizontal:  100vw minus left/right gutters
+         · vertical:    available height × 4/3 (so height fits viewport) */
+    max-width: min(
+      1200px,
+      calc(100vw - 80px),
+      calc((100vh - 160px) * 1.333)
+    ) !important;  /* override StPageFlip's inline max-width: 1400px */
+    margin: 0 auto;
+    /* Cream paper background + stacked thickness + drop shadow */
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 25% 25%, rgba(150, 122, 79, 0.04) 0, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(168, 54, 42, 0.03) 0, transparent 50%);
+    box-shadow:
+      -2px 0 0 #ebe5d4,
+       2px 0 0 #ebe5d4,
+      -4px 0 0 #d9d0bf,
+       4px 0 0 #d9d0bf,
+      -6px 0 0 #c8bfa8,
+       6px 0 0 #c8bfa8,
+      0 0 0 1px rgba(43, 36, 24, 0.04),
+      0 30px 60px -10px rgba(0, 0, 0, 0.55),
+      0 80px 120px -30px rgba(0, 0, 0, 0.4);
+  }
+  /* When we're on the cover (showCover renders a single right-side page),
+     hide the cream wrapper background under the empty left half so the
+     book reads as CLOSED — only the cover panel on the desk, surrounded
+     by the wood backdrop instead of a full open-spread of empty cream.
+     Applied only when the page-flip state is settled (.is-cover); during
+     a flip the wrapper styling stays normal so StPageFlip can animate
+     against a stable container. */
+  body.on-cover-static .book-flip {
+    background: transparent;
+    box-shadow: none;
+  }
+  body.on-cover-static .book-flip::after {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    /* the cover lives in the right half (50%-100%) of the wrapper */
+    left: 50%; right: 0;
+    pointer-events: none;
+    box-shadow:
+      -2px 0 0 #ebe5d4,
+       2px 0 0 #ebe5d4,
+      -4px 0 0 #d9d0bf,
+       4px 0 0 #d9d0bf,
+      0 0 0 1px rgba(43, 36, 24, 0.06),
+      0 22px 32px rgba(0, 0, 0, 0.55),
+      0 6px 10px rgba(0, 0, 0, 0.35);
+    z-index: 0;
+  }
+  /* Narrow viewports → portrait single-page mode (StPageFlip handles
+     this internally via usePortrait), so the wrapper aspect flips too */
+  @media (max-width: 760px) {
+    .book-flip {
+      max-width: min(420px, calc(100vw - 32px));
+    }
+  }
+  /* Each .page is one face of a leaf — left and right pages alternate */
+  .page {
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 30% 20%, rgba(150, 122, 79, 0.03) 0, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(168, 54, 42, 0.02) 0, transparent 50%);
+    padding: 56px clamp(36px, 4vw, 64px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    /* StPageFlip needs the page to fill its container */
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    color: var(--ink);
+  }
+
+  /* Page 0 — closed-book cover (rendered alone by showCover:true).
+     Reuses the cover-eyebrow / cover-kanji / cover-issue / cover-cta
+     styles that were used in the old intro overlay. */
+  .page--cover {
+    padding: 0;
+    background: var(--bg);
+    background-image:
+      /* spine shadow on the left edge */
+      linear-gradient(90deg,
+        rgba(43, 36, 24, 0.18) 0%,
+        rgba(43, 36, 24, 0.08) 3%,
+        transparent 8%),
+      radial-gradient(circle at 25% 25%, rgba(150, 122, 79, 0.06) 0, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(168, 54, 42, 0.04) 0, transparent 50%);
+    box-shadow:
+      inset 0 0 60px rgba(43, 36, 24, 0.06),
+      inset 0 -2px 4px rgba(43, 36, 24, 0.08);
+  }
+  .book-cover-page {
+    width: 100%;
+    height: 100%;
+    padding: 14% 12% 14% 16%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    position: relative;
+  }
+  /* Sheen sweep on the cover — a slow gold highlight crossing the face */
+  .book-cover-page::before {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    background: linear-gradient(115deg,
+      transparent 35%,
+      rgba(150, 122, 79, 0.14) 50%,
+      transparent 65%);
+    transform: translateX(-60%);
+    animation: cover-sheen 8s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes cover-sheen {
+    0%, 100% { transform: translateX(-60%); opacity: 0; }
+    40%      { opacity: 1; }
+    60%      { opacity: 1; }
+    100%     { transform: translateX(60%); opacity: 0; }
+  }
+  /* Even-indexed (left) pages get inner gutter on the right;
+     odd (right) pages get inner gutter on the left */
+  .page--left  { padding-right: clamp(56px, 6vw, 92px); }
+  .page--right { padding-left:  clamp(56px, 6vw, 92px); }
+  /* The library applies a class .stf__block to its rendered pages; we
+     hint at paper aesthetics inside */
+  .stf__block .page,
+  .stf__wrapper .page {
+    box-shadow: inset 0 0 60px rgba(43, 36, 24, 0.03);
+  }
+
+  /* Folio (page numbers) — bottom corners */
+  .folio {
+    position: absolute;
+    bottom: 18px;
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-faint);
+    letter-spacing: 0.18em;
+  }
+  .folio--left  { left:  clamp(40px, 5vw, 76px); }
+  .folio--right { right: clamp(40px, 5vw, 76px); }
+  .folio--running {
+    font-family: "JetBrains Mono", monospace;
+    font-style: normal;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  /* Page navigation buttons — hidden. Navigation now relies on chapter
+     tabs (right margin), wheel scroll, keyboard arrows, and StPageFlip's
+     corner-drag. The floating arrows added desktop chrome but cluttered
+     the book metaphor. */
+  .page-nav { display: none; }
+
+  /* Printed-book footer — caption below the book.
+     Three parts: left side label · center mark (◇) · right page numbers.
+     The hairlines on each side echo a printed colophon, not a web nav. */
+  .book-footer {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(24px, 4vw, 48px);
+    white-space: nowrap;
+    color: rgba(214, 195, 165, 0.55);
+  }
+  .book-footer-side {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .book-footer-rule {
+    display: inline-block;
+    width: 28px;
+    height: 1px;
+    background: rgba(214, 195, 165, 0.30);
+  }
+  .book-footer-text {
+    font-family: "Cormorant Garamond", "Noto Serif SC", serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.20em;
+    color: rgba(214, 195, 165, 0.78);
+  }
+  .book-footer-text .slash {
+    margin: 0 4px;
+    color: rgba(214, 195, 165, 0.35);
+    font-style: normal;
+  }
+  .book-footer-mark {
+    color: var(--vermillion);
+    font-family: "Noto Serif JP", serif;
+    font-size: 16px;
+    font-style: normal;
+    letter-spacing: 0;
+    opacity: 0.80;
+    transform: rotate(-4deg) translateY(-1px);
+    text-shadow: 0 0 14px rgba(168, 54, 42, 0.4);
+  }
+  @media (max-width: 760px) {
+    .book-footer { bottom: -34px; gap: 14px; }
+    .book-footer-rule { width: 16px; }
+    .book-footer-text { font-size: 11px; letter-spacing: 0.16em; }
+    .book-footer-mark { font-size: 14px; }
+  }
+
+  /* Bookish entry: numbered event in a content spread */
+  .book-entry {
+    display: grid;
+    grid-template-columns: 32px 78px 1fr;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line-soft);
+    align-items: start;
+  }
+  .book-entry:last-child { border-bottom: none; }
+  .book-entry__num {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--vermillion);
+    line-height: 1.4;
+    text-align: right;
+    padding-right: 2px;
+  }
+  .book-entry__thumb {
+    width: 78px;
+    height: 78px;
+    background: var(--bg-deep) center/cover no-repeat;
+    border-radius: 2px;
+    box-shadow: var(--shadow-paper-1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  /* Placeholder for entries without an image — chapter-colored tile with
+     a faint kanji watermark (matches the postcard placeholder). */
+  .book-entry__thumb--empty {
+    background: linear-gradient(135deg,
+      var(--thumb-color, var(--vermillion)),
+      color-mix(in srgb, var(--thumb-color, var(--vermillion)) 65%, #000));
+  }
+  .book-entry__thumb-kanji {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 36px;
+    line-height: 1;
+    color: rgba(253, 251, 246, 0.28);
+    user-select: none;
+  }
+  .book-entry__title {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .book-entry__meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.14em;
+    margin-bottom: 4px;
+  }
+  .book-entry__venue {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .book-entry__desc {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* === Title spread === */
+  .spread--title .spread-page--left {
+    justify-content: center;
+    align-items: center;
+  }
+  .title-monogram {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 240px;
+    font-style: italic;
+    color: rgba(43, 36, 24, 0.04);
+    font-weight: 400;
+    line-height: 0.85;
+    user-select: none;
+  }
+  .spread--title .spread-page--right {
+    justify-content: center;
+    align-items: flex-start;
+    padding-right: clamp(40px, 8vw, 120px);
+  }
+  .title-eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .title-main {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: clamp(72px, 9vw, 128px);
+    color: var(--ink);
+    line-height: 0.95;
+    letter-spacing: 0.05em;
+    margin-bottom: 20px;
+  }
+  .title-romaji {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--ink-soft);
+    letter-spacing: 0.18em;
+    margin-bottom: 24px;
+  }
+  .title-rule {
+    width: 72px;
+    height: 1px;
+    background: var(--vermillion);
+    margin-bottom: 24px;
+  }
+  .title-issue {
+    font-family: "Noto Serif SC", serif;
+    font-size: 15px;
+    color: var(--ink-soft);
+    letter-spacing: 0.18em;
+    margin-bottom: 8px;
+  }
+  .title-tagline {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-faint);
+  }
+
+  /* === Chapter opener spread === */
+  .spread--chapter-opener .spread-page--left {
+    justify-content: center;
+    align-items: center;
+  }
+  .chapter-marker {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    /* Eyebrow over the opener — sits above the chapter number */
+    margin-bottom: 14px;
+  }
+  .spread--chapter-opener .spread-page--right {
+    justify-content: center;
+    align-items: flex-start;
+    position: relative;
+  }
+  .chapter-num {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 18px;
+    letter-spacing: 0.28em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .chapter-kanji {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: clamp(140px, 18vw, 240px);
+    line-height: 0.85;
+    color: var(--vermillion);
+    margin-bottom: 32px;
+  }
+  .chapter-name-zh {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 600;
+    font-size: 32px;
+    letter-spacing: 0.18em;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .chapter-name-en {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .chapter-epigraph {
+    max-width: 32em;
+    font-family: "Noto Serif SC", serif;
+    font-size: 15px;
+    line-height: 1.9;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .chapter-epigraph-en {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-faint);
+    margin-bottom: 36px;
+  }
+  .chapter-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.28em;
+  }
+  .chapter-count strong {
+    font-family: "Noto Serif JP", serif;
+    font-weight: 900;
+    font-size: 22px;
+    color: var(--vermillion);
+    margin: 0 4px;
+  }
+
+  /* Mobile: single page, swipe-only */
+  @media (max-width: 760px) {
+    body.paged-mode .book-volume {
+      top: 12px; bottom: 16px;
+      width: calc(100% - 24px);
+    }
+    .spread { grid-template-columns: 1fr; }
+    .spread::before { display: none; }
+    .spread-page--left { display: none; }
+    .spread-page--right {
+      padding-left: clamp(20px, 5vw, 40px);
+    }
+    .title-main { font-size: clamp(56px, 14vw, 80px); }
+    .chapter-kanji { font-size: clamp(100px, 30vw, 160px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .book-pages { transition-duration: 200ms; }
+  }
+
+  /* ====================================================================
+     View toggle — single round icon at top-right. The glyph represents
+     the mode you'll switch TO (≡ list in book mode, 卷 in list mode).
+     ==================================================================== */
+  .view-toggle {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 60;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(20, 14, 8, 0.72);
+    border: 1px solid rgba(241, 225, 189, 0.18);
+    color: rgba(241, 225, 189, 0.85);
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    font-family: "Noto Serif SC", "Noto Serif JP", serif;
+    font-size: 14px;
+    line-height: 1;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 200ms, background 200ms, border-color 200ms, transform 200ms;
+  }
+  .view-toggle:hover {
+    color: var(--paper-white);
+    border-color: rgba(241, 225, 189, 0.4);
+    transform: scale(1.06);
+  }
+  /* On list-mode (cream bg) the dark pill stands out; on book-mode
+     (dark wood bg) it blends — both are intentional. */
+  body:not(.paged-mode) .view-toggle {
+    background: rgba(43, 36, 24, 0.7);
+    color: rgba(253, 251, 246, 0.92);
+    border-color: rgba(253, 251, 246, 0.2);
+  }
+  /* Show the right glyph depending on current mode (CSS, no JS swap) */
+  .view-toggle::before { content: "≡"; font-size: 16px; }
+  body:not(.paged-mode) .view-toggle::before { content: "卷"; font-size: 14px; }
+
+  /* Hide every book-mode-specific element when NOT in paged-mode, so
+     the original scrolling site can render cleanly. The .void-backdrop
+     (wood desk) is book-specific too — without it, body's cream
+     background (--bg) shows through, matching the original list site. */
+  body:not(.paged-mode) .book-intro,
+  body:not(.paged-mode) .region-bar,
+  body:not(.paged-mode) .chapter-tabs,
+  body:not(.paged-mode) .book-ribbon,
+  body:not(.paged-mode) .book-margin-title,
+  body:not(.paged-mode) .book-progress,
+  body:not(.paged-mode) .book-pages-frame,
+  body:not(.paged-mode) .void-backdrop,
+  body:not(.paged-mode) .book-volume > #pageIndicator {
+    display: none !important;
+  }
+  /* Restore the cream paper background that the original site used */
+  body:not(.paged-mode) {
+    background-color: var(--bg);
+    color: var(--ink);
+  }
+  /* When NOT in paged-mode, the closed-book overlay's body lock would
+     prevent normal scrolling. Force scroll back on. */
+  body:not(.paged-mode) { overflow: auto !important; height: auto !important; }
+  body:not(.paged-mode).book-intro-active { overflow: auto !important; }
+  /* Also reset .book-volume to its natural document flow */
+  body:not(.paged-mode) .book-volume {
+    position: static;
+    transform: none;
+    top: auto; bottom: auto; left: auto;
+    height: auto;
+    box-shadow: none;
+    background: transparent;
+    width: auto;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+
+  /* Center gutter — a faint vertical shadow runs down the spine of the
+     entire book, like a real bound book's center seam */
+  .book-volume::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 64px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(43, 36, 24, 0.04) 35%,
+      rgba(43, 36, 24, 0.08) 50%,
+      rgba(43, 36, 24, 0.04) 65%,
+      transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+    mix-blend-mode: multiply;
+  }
+  /* The book's content needs to sit above the gutter */
+  .book-volume > * { position: relative; z-index: 1; }
+  /* Topbar acts as the running head — slightly inset to feel like part of the book */
+  .book-volume > .topbar { background: transparent; }
+
+  /* Mobile / tablet: pull side margins in, drop the gutter */
+  @media (max-width: 900px) {
+    .book-volume {
+      max-width: 100%;
+      border-left: none;
+      border-right: none;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    }
+    .book-volume::before { display: none; }
+  }
+
+  /* ====================================================================
+     MOBILE (≤ 600px) — vertical single-page book + bottom chapter
+     toolbar + collapsed top filter pill. The desktop spread metaphor
+     gives way to "a book opened to one page in your hand."
+     ==================================================================== */
+  @media (max-width: 600px) {
+    /* --- Closed-book intro --- */
+    .book-stage {
+      height: auto;
+      width: min(78vw, 280px);
+      aspect-ratio: 11 / 15;
+    }
+    .cover-kanji span { font-size: clamp(56px, 18vw, 86px); }
+    .cover-eyebrow { font-size: 9px; letter-spacing: 0.24em; }
+    .cover-issue   { font-size: 13px; margin-top: 12px; }
+    .cover-cta     { font-size: 10px; margin-top: 22px; }
+
+    /* --- Hide the desktop edge chrome --- */
+    body.paged-mode .book-margin-title,
+    body.paged-mode .book-ribbon,
+    body.paged-mode .book-progress { display: none !important; }
+
+    /* --- Top filter bar: collapse to a single sticky pill --- */
+    .region-bar {
+      top: 8px;
+      padding: 4px 12px;
+      max-width: none;
+      width: auto;
+      left: 12px; right: 12px;
+    }
+    .region-bar__row { gap: 6px; }
+    .region-bar__label,
+    .region-bar__divider { display: none; }
+    /* hide every region chip except the active one — shows as a single
+       pill summary. Tapping it opens the bottom-sheet picker (TODO P1) */
+    .region-bar__row--regions .region-chip:not(.is-active):not(.region-chip--saved) {
+      display: none;
+    }
+    /* Show "全部" even when no region active (it's the active one) */
+    /* Prefecture row: same single-pill summary */
+    .region-bar__row--prefectures .region-chip:not(.is-active) { display: none; }
+    .region-bar.has-prefectures .region-bar__row--prefectures {
+      max-height: 32px;
+    }
+
+    /* --- Book-volume reclaims most of the viewport --- */
+    body.paged-mode .book-volume {
+      top: 56px;            /* below filter pill */
+      bottom: 60px;         /* above chapter toolbar (44 + 16 breathing) */
+      width: calc(100% - 16px);
+    }
+
+    /* --- Chapter tabs: vertical column → horizontal bottom toolbar.
+       Overrides the @media (max-width: 760px) display:none rule above. --- */
+    body.paged-mode .chapter-tabs {
+      display: flex !important;
+      position: fixed;
+      top: auto;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      transform: none;
+      flex-direction: row;
+      width: 100%;
+      height: 50px;
+      padding: 0 4px;
+      background: rgba(20, 14, 8, 0.78);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(241, 225, 189, 0.12);
+      gap: 0;
+      justify-content: space-around;
+      align-items: stretch;
+      z-index: 30;
+    }
+    .chapter-tab {
+      width: auto;
+      height: auto;
+      flex: 1;
+      writing-mode: horizontal-tb;
+      padding: 6px 0 8px;
+      border-radius: 4px;
+      background: transparent;
+      color: rgba(241, 225, 189, 0.65);
+      box-shadow: none;
+      min-width: 0;
+      transform: none !important;
+    }
+    .chapter-tab .tab-key {
+      writing-mode: horizontal-tb;
+      font-size: 18px;
+      line-height: 1.1;
+      letter-spacing: 0;
+      writing-mode: horizontal-tb;
+    }
+    .chapter-tab .tab-num,
+    .chapter-tab .tab-dot { display: none; }
+    .chapter-tab.is-active {
+      color: var(--paper-white);
+      background: rgba(168, 54, 42, 0.85);
+    }
+
+    /* --- Book-flip max-width relaxes for portrait single page --- */
+    .book-flip {
+      max-width: calc(100vw - 16px) !important;
+    }
+
+    /* --- Entries: more compact for narrow viewport --- */
+    .book-entry {
+      grid-template-columns: 24px 60px 1fr;
+      gap: 10px;
+      padding: 10px 0;
+    }
+    .book-entry__num   { font-size: 13px; }
+    .book-entry__thumb { width: 60px; height: 60px; }
+    .book-entry__thumb-kanji { font-size: 28px; }
+    .book-entry__title { font-size: 13px; margin-bottom: 3px; }
+    .book-entry__meta  { font-size: 9px; margin-bottom: 3px; }
+    .book-entry__venue { font-size: 10px; margin-bottom: 3px; }
+    .book-entry__desc  { font-size: 11px; line-height: 1.5; -webkit-line-clamp: 2; }
+
+    /* --- Page interior padding shrinks --- */
+    .page {
+      padding: 24px 16px;
+    }
+    .page--has-runhead { padding-top: 56px !important; }
+    .page--has-runhead::before {
+      top: 40px;
+      left: 16px; right: 16px;
+    }
+    .running-head { font-size: 10px; padding: 8px 16px; }
+
+    /* --- Footer compacts to just folio --- */
+    .book-footer {
+      bottom: -28px;
+      gap: 8px;
+    }
+    .book-footer-rule { width: 12px; }
+    .book-footer-text { font-size: 10px; letter-spacing: 0.12em; }
+    .book-footer-left { display: none; }   /* drop the chapter label */
+    .book-footer-mark { display: none; }
+
+    /* --- Chapter opener: kanji shrinks --- */
+    .chapter-kanji { font-size: clamp(80px, 28vw, 140px); }
+    .chapter-num   { font-size: 11px; }
+    .chapter-name-zh { font-size: 18px; }
+    .chapter-name-en { font-size: 10px; }
+
+    /* --- Postcard: become a bottom-sheet style overlay --- */
+    .postcard-stage { padding: 0; }
+    .postcard {
+      width: 100%;
+      max-width: 100%;
+      height: 95vh;
+      border-radius: 16px 16px 0 0;
+      margin-top: auto;
+    }
+    .postcard-img { height: 200px; }
+  }
 </style>
 </head>
-<body data-tab="events">
+<body data-tab="events" class="paged-mode book-intro-active">
+
+<!-- View toggle — single icon button. Glyph swaps via CSS based on
+     body.paged-mode; click reloads with the inverse view. Preference
+     persisted to localStorage as `yoro_view`. -->
+<button class="view-toggle" id="viewToggle" type="button"
+        aria-label="切换视图（书卷 / 列表）" title="切换视图"></button>
+
+<div class="void-backdrop" aria-hidden="true"></div>
+
+<!-- Left margin: vertical issue title (paged mode only) -->
+<aside class="book-margin-title" aria-hidden="true">立 夏 卷<span class="mt-dot">·</span><span class="mt-year">二〇二六</span><span class="mt-roman">  RIKKA · No. 05</span></aside>
+
+<!-- Silk ribbon bookmark — click to jump back to the TOC -->
+<button class="book-ribbon" id="bookRibbon" type="button" aria-label="返回目录" title="回 目錄"></button>
+
+<!-- Fore-edge thumb tabs · chapter quick-jump (populated by JS) -->
+<nav class="chapter-tabs" id="chapterTabs" aria-label="章节快速跳转"></nav>
+
+
+<!-- Right margin: page progress rail (paged mode only) -->
+<div class="book-progress" aria-hidden="true">
+  <span class="book-progress-cap book-progress-cap--top">I</span>
+  <span class="book-progress-marker" id="bookProgressMarker"></span>
+  <span class="book-progress-cap book-progress-cap--bot">終</span>
+</div>
+
+<!-- ============== Postcard · event detail ============== -->
+<div class="postcard-stage" id="postcardStage" aria-hidden="true" role="dialog" aria-modal="true" aria-label="活动详情">
+  <article class="postcard" id="postcard">
+    <button class="postcard-save" id="postcardSave" type="button" aria-label="收藏" title="收藏 / Save">
+      <span class="pcs-icon open-state">☆</span><span class="pcs-icon saved-state">★</span>
+      <span class="open-state">收 藏</span><span class="saved-state">已 收</span>
+    </button>
+    <button class="postcard-close" id="postcardClose" type="button" aria-label="收回">✕</button>
+
+    <!-- Front -->
+    <div class="postcard-face postcard-face--front">
+      <div class="postcard-img" id="postcardImg"></div>
+      <h2 class="postcard-title" id="postcardTitle">—</h2>
+      <div class="postcard-title-jp" id="postcardTitleJp"></div>
+      <div class="postcard-front-desc" id="postcardFrontDesc"></div>
+      <div class="postcard-meta">
+        <span id="postcardMetaDate">—</span>
+        <span class="postcard-meta-rule"></span>
+        <span id="postcardMetaPlace">—</span>
+      </div>
+      <div class="postcard-stamp">
+        <span class="postcard-stamp-k" id="postcardStampK">祭</span>
+        <span class="postcard-stamp-s">立 夏</span>
+      </div>
+      <div class="postcard-flip-hint">点 击 翻 面</div>
+    </div>
+
+    <!-- Back -->
+    <div class="postcard-face postcard-face--back">
+      <div class="postcard-back-header">
+        <span>FROM <span id="postcardBackFrom">—</span></span>
+        <span id="postcardBackDate">—</span>
+      </div>
+      <div class="postcard-back-venue" id="postcardBackVenue">—</div>
+      <div class="postcard-back-meta" id="postcardBackJp"></div>
+      <div class="postcard-back-desc" id="postcardBackDesc">—</div>
+      <a class="postcard-back-link" id="postcardBackLink" target="_blank" rel="noopener">→ 了 解 详 情</a>
+      <div class="postcard-postmark">
+        <span class="postcard-postmark-place" id="postcardPostmark">—</span>
+        <span class="postcard-postmark-date" id="postcardPostmarkDate">—</span>
+      </div>
+      <div class="postcard-flip-hint">点 击 翻 回</div>
+    </div>
+  </article>
+</div>
+
+<!-- ============== Book Intro · Cover → TOC ============== -->
+<div class="book-intro" id="bookIntro" role="dialog" aria-modal="true" aria-label="目录">
+  <button class="book-intro-skip" type="button" id="bookIntroSkip">跳过 ✕</button>
+  <div class="book-stage">
+    <!-- Left page: blank paper. The title page content lives on the cover's
+         back face — semantically that's the "inside front cover / 扉页"
+         that you see after opening a book. -->
+    <div class="book-page book-page-left"></div>
+    <!-- Right page: TOC chapter list (revealed when cover flips) -->
+    <div class="book-page book-page-right toc-list-page">
+      <ol class="toc-list" id="tocList"><!-- populated by JS --></ol>
+      <div class="toc-footer">
+        <span class="total-label">— END OF CONTENTS —</span>
+        <button class="enter-cta" type="button" id="bookIntroEnter">进入正篇 →</button>
+      </div>
+    </div>
+    <!-- Cover: front-cover face initially; back-face becomes title page after flip -->
+    <div class="book-cover" id="bookCover" role="button" aria-label="点击翻开">
+      <div class="book-cover-front">
+        <div class="cover-eyebrow">YORO · LETTERS FROM AFAR</div>
+        <div class="cover-rule"></div>
+        <div class="cover-kanji">
+          <span>立</span><span>夏</span>
+        </div>
+        <div class="cover-issue">No. 05 · 立夏 · 二〇二六</div>
+        <div class="cover-cta">点 击 翻 开 →</div>
+      </div>
+      <!-- Back face = inside front cover = the title page (visible after flip) -->
+      <div class="book-cover-back toc-title-page">
+        <div class="tp-eyebrow">YORO · 远 方 来 信</div>
+        <div class="tp-title">目 錄</div>
+        <div class="tp-sub">— CONTENTS —</div>
+        <div class="tp-rule"></div>
+        <div class="tp-meta">立夏 · 2026.05 · No. 05</div>
+        <div class="tp-count">全 <strong id="tocTotal">—</strong> 場</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <nav class="side-nav" id="sideNav" aria-label="章节导航" hidden>
   <ul></ul>
@@ -2358,6 +5068,7 @@
   <span>第五号</span>
 </div>
 
+<div class="book-volume">
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
@@ -2372,6 +5083,141 @@
     </div>
   </div>
 </header>
+
+<!-- ============== M1 · Paged Book (Spread Engine) ============== -->
+<div class="book-pages-frame" id="bookPagesFrame">
+  <button class="page-nav page-nav--prev" id="pagePrev" type="button" aria-label="上一页">
+    <span class="page-nav-arrow">‹</span>
+  </button>
+  <button class="page-nav page-nav--next" id="pageNext" type="button" aria-label="下一页">
+    <span class="page-nav-arrow">›</span>
+  </button>
+
+  <div class="book-flip" id="bookFlip">
+
+    <!-- Page 1 · inside front cover (left of spread 0) -->
+    <div class="page page--left">
+      <div class="title-monogram" style="margin:auto;">Y</div>
+      <span class="folio folio--left folio--running">YORO · 立夏 卷</span>
+    </div>
+
+    <!-- Page 2 · Title (right of spread 0) -->
+    <div class="page page--right">
+      <div class="title-eyebrow">YORO · LETTERS FROM AFAR</div>
+      <div class="title-main">立夏</div>
+      <div class="title-romaji">RIKKA · 2026</div>
+      <div class="title-rule"></div>
+      <div class="title-issue">第 五 卷 · No. 05</div>
+      <div class="title-tagline">— Letters from afar, one chapter at a time —</div>
+      <span class="folio folio--right">i</span>
+    </div>
+
+    <!-- Page 3 · Chapter marker (left of spread 1) -->
+    <div class="page page--left">
+      <div style="margin:auto;text-align:center;">
+        <div class="chapter-marker">— 章 之 始 —</div>
+      </div>
+      <span class="folio folio--left">ii</span>
+    </div>
+
+    <!-- Page 4 · Chapter opener (right of spread 1) -->
+    <div class="page page--right">
+      <div class="chapter-num">第 I 章 · CHAPTER ONE</div>
+      <div class="chapter-kanji">特</div>
+      <div class="chapter-name-zh">本 期 精 选</div>
+      <div class="chapter-name-en">FEATURED</div>
+      <div class="chapter-epigraph">值得反复看的几件事。</div>
+      <div class="chapter-epigraph-en">— Worth reading twice.</div>
+      <div class="chapter-count">全 <strong>9</strong> 件</div>
+      <span class="folio folio--right">001</span>
+    </div>
+
+    <!-- Page 5 · Content N°01-03 (left of spread 2) -->
+    <div class="page page--left">
+      <div class="book-entry">
+        <span class="book-entry__num">N° 01</span>
+        <div class="book-entry__thumb"></div>
+        <div>
+          <div class="book-entry__title">三社祭 · 浅草神社</div>
+          <div class="book-entry__meta">5/16 – 5/18 · TOKYO</div>
+          <div class="book-entry__venue">浅草神社 · 東京</div>
+          <div class="book-entry__desc">东京最古老的祭典之一。每年初夏，约百座神舆涌入浅草街头，三天两夜。</div>
+        </div>
+      </div>
+      <div class="book-entry">
+        <span class="book-entry__num">N° 02</span>
+        <div class="book-entry__thumb"></div>
+        <div>
+          <div class="book-entry__title">teamLab Planets 東京</div>
+          <div class="book-entry__meta">通 年 · TOKYO</div>
+          <div class="book-entry__venue">teamLab Planets TOKYO DMM</div>
+          <div class="book-entry__desc">入水中，与花共生。可全身沉浸的体验型数字艺术空间，世界级 teamLab 体验。</div>
+        </div>
+      </div>
+      <div class="book-entry">
+        <span class="book-entry__num">N° 03</span>
+        <div class="book-entry__thumb"></div>
+        <div>
+          <div class="book-entry__title">葵 祭 · 路 头 之 仪</div>
+          <div class="book-entry__meta">5/15 · KYOTO</div>
+          <div class="book-entry__venue">京都御所 → 下鸭神社 → 上贺茂神社</div>
+          <div class="book-entry__desc">平安王朝行列再现。来自京都御所的牛车、骑马武士与平安装束的少女，京都最古老的国家祭礼。</div>
+        </div>
+      </div>
+      <span class="folio folio--left">002</span>
+    </div>
+
+    <!-- Page 6 · Content N°04-06 (right of spread 2) -->
+    <div class="page page--right">
+      <div class="book-entry">
+        <span class="book-entry__num">N° 04</span>
+        <div class="book-entry__thumb"></div>
+        <div>
+          <div class="book-entry__title">明月院 · 紫陽花</div>
+          <div class="book-entry__meta">6/1 – 6/30 · KAMAKURA</div>
+          <div class="book-entry__venue">神奈川 · 明月院</div>
+          <div class="book-entry__desc">明月院的庭院里只有一种颜色，叫「明月院蓝」。整座院子被绣球花填满的样子。</div>
+        </div>
+      </div>
+      <div class="book-entry">
+        <span class="book-entry__num">N° 05</span>
+        <div class="book-entry__thumb"></div>
+        <div>
+          <div class="book-entry__title">隅田川花火大会</div>
+          <div class="book-entry__meta">7/27 · TOKYO</div>
+          <div class="book-entry__venue">隅田川河川敷</div>
+          <div class="book-entry__desc">每年两岸约百万人观看的大型花火大会。20,000 发花火在两个会场同时升空。</div>
+        </div>
+      </div>
+      <div class="book-entry">
+        <span class="book-entry__num">N° 06</span>
+        <div class="book-entry__thumb"></div>
+        <div>
+          <div class="book-entry__title">フェルメール《真珠の耳飾りの少女》展</div>
+          <div class="book-entry__meta">8/21 – 9/27 · OSAKA</div>
+          <div class="book-entry__venue">大阪中之島美術館</div>
+          <div class="book-entry__desc">维米尔《戴珍珠耳环的少女》原作来日展出。配合 17 世纪荷兰黄金时代绘画展。</div>
+        </div>
+      </div>
+      <span class="folio folio--right folio--running">续 第 I 章</span>
+    </div>
+
+  </div>
+
+  <div class="book-footer" id="pageIndicator">
+    <span class="book-footer-side book-footer-left">
+      <span class="book-footer-rule"></span>
+      <span class="book-footer-text" id="ftChapterLabel">立 夏 卷 · 二〇二六</span>
+      <span class="book-footer-rule"></span>
+    </span>
+    <span class="book-footer-mark">◇</span>
+    <span class="book-footer-side book-footer-right">
+      <span class="book-footer-rule"></span>
+      <span class="book-footer-text"><span id="pageCurrent">—</span> <span class="slash">/</span> <span id="pageTotal">—</span></span>
+      <span class="book-footer-rule"></span>
+    </span>
+  </div>
+</div>
 
 <section class="hero-story" id="heroStory">
   <div class="hero-pages" id="heroPages"><!-- generated by JS --></div>
@@ -2479,6 +5325,30 @@
     <span>UPDATED <span id="meta-updated">—</span></span>
   </div>
 </footer>
+</div><!-- /.book-volume -->
+
+<!-- Region filter bar — persistent, two-row, position:fixed at the
+     viewport bottom. Sits OUTSIDE .book-volume so it doesn't compress
+     the book's flex layout. Populated by setupRegionBar() in JS. -->
+<div class="region-bar" id="regionBar" role="toolbar" aria-label="筛选">
+  <div class="region-bar__row region-bar__row--regions" role="group" aria-label="按地区筛选">
+    <span class="region-bar__label">区 域 · REGION</span>
+    <span class="region-bar__divider">◇</span>
+    <div class="region-bar__chips" id="regionChips"><!-- regions populate here --></div>
+    <div class="region-bar__saved">
+      <button class="region-chip region-chip--saved" id="regionBarSaved" type="button" aria-pressed="false">
+        <span class="region-chip__star">★</span>
+        <span class="region-chip__label">只 看 已 收</span>
+        <span class="region-chip__count" id="regionBarSavedCount">0</span>
+      </button>
+    </div>
+  </div>
+  <div class="region-bar__row region-bar__row--prefectures" role="group" aria-label="按府县筛选">
+    <span class="region-bar__label">府 县 · PREFECTURE</span>
+    <span class="region-bar__divider">◇</span>
+    <div class="region-bar__chips" id="prefectureChips"><!-- prefectures populate here --></div>
+  </div>
+</div>
 
 <script>
 const CAT_LABEL = {
@@ -2508,11 +5378,49 @@ const REGIONS = {
   "沖縄": "okinawa"
 };
 
-// Build region → prefectures map from REGIONS (already defined above)
+// Build region → prefectures map from REGIONS (already defined above).
+// The dataset uses Japanese kanji (東京, 兵庫); for region-bar UI we display
+// simplified-style Chinese labels for consistency with the rest of the
+// book's typography.
 const REGION_PREFS = {};
 for (const [pref, reg] of Object.entries(REGIONS)) {
   (REGION_PREFS[reg] = REGION_PREFS[reg] || []).push(pref);
 }
+
+// Display label for each region (in reading order, west → east is the
+// classic Japanese convention but the book uses our own ordering).
+const REGION_DISPLAY = [
+  { key: "all",      label: "全 部" },
+  { key: "kanto",    label: "关 东" },
+  { key: "kansai",   label: "关 西" },
+  { key: "chubu",    label: "中 部" },
+  { key: "hokkaido", label: "北海道" },
+  { key: "tohoku",   label: "东 北" },
+  { key: "chugoku",  label: "中 国" },
+  { key: "shikoku",  label: "四 国" },
+  { key: "kyushu",   label: "九 州" },
+  { key: "okinawa",  label: "冲 绳" },
+];
+
+// Display label for a single prefecture (data → UI). Falls back to the
+// raw kanji if not mapped — keeps things working as data expands.
+const PREFECTURE_DISPLAY = {
+  "東京": "东京", "神奈川": "神奈川", "埼玉": "埼玉", "千葉": "千叶",
+  "茨城": "茨城", "栃木": "栃木", "群馬": "群马",
+  "京都": "京都", "大阪": "大阪", "兵庫": "兵库",
+  "奈良": "奈良", "和歌山": "和歌山", "滋賀": "滋贺",
+  "愛知": "爱知", "岐阜": "岐阜", "静岡": "静冈", "山梨": "山梨",
+  "長野": "长野", "新潟": "新潟", "富山": "富山", "石川": "石川", "福井": "福井",
+  "青森": "青森", "岩手": "岩手", "秋田": "秋田",
+  "山形": "山形", "宮城": "宫城", "福島": "福岛",
+  "北海道": "北海道",
+  "鳥取": "鸟取", "島根": "岛根", "岡山": "冈山",
+  "広島": "广岛", "山口": "山口",
+  "徳島": "德岛", "香川": "香川", "愛媛": "爱媛", "高知": "高知",
+  "福岡": "福冈", "佐賀": "佐贺", "長崎": "长崎", "熊本": "熊本",
+  "大分": "大分", "宮崎": "宫崎", "鹿児島": "鹿儿岛",
+  "沖縄": "冲绳",
+};
 
 const _savedFilters = (() => {
   try { return JSON.parse(localStorage.getItem("yoro_filters") || "{}"); }
@@ -3722,6 +6630,1073 @@ async function init() {
     p.classList.toggle("active", p.dataset.region === state.filters.region)
   );
   render();
+  // Apply saved view preference BEFORE setting up book chrome so we
+  // don't run book-only setup in list mode.
+  applyInitialView();
+
+  setupViewToggle();
+
+  if (document.body.classList.contains("paged-mode")) {
+    setupBookIntro(state.events);
+    window.__YORO_ALL_EVENTS__ = state.events;
+    setupPagedBook(state.events);
+    setupPostcard();
+    setupBookTOC();
+    setupTOCFilters();
+    setupRegionBar();
+  } else {
+    // Still expose events for when user later switches to book view
+    window.__YORO_ALL_EVENTS__ = state.events;
+    setupPostcard();
+  }
+}
+
+// ============== View toggle (book ↔ list) ==============
+function applyInitialView() {
+  let pref = "book";
+  try { pref = localStorage.getItem("yoro_view") || "book"; } catch {}
+  if (pref === "list") {
+    document.body.classList.remove("paged-mode");
+    document.body.classList.remove("book-intro-active");
+  } else {
+    document.body.classList.add("paged-mode");
+  }
+  syncViewToggleButtons(pref);
+}
+
+function syncViewToggleButtons(_view) {
+  // Single-button toggle now — the glyph is swapped purely by CSS
+  // based on body.paged-mode, so no JS work needed here.
+}
+
+function setupViewToggle() {
+  const toggle = document.getElementById("viewToggle");
+  if (!toggle) return;
+  toggle.addEventListener("click", () => {
+    const wasBook = document.body.classList.contains("paged-mode");
+    const next = wasBook ? "list" : "book";
+    try { localStorage.setItem("yoro_view", next); } catch {}
+    // Reload so each mode's setup runs from a clean DOM (StPageFlip in
+    // particular needs a fresh init; partial-switching leaves half a
+    // book and half a list mid-flip).
+    location.reload();
+  });
+}
+
+// ============== TOC filter chips · click to rebuild book ==============
+function setupTOCFilters() {
+  document.addEventListener("click", (e) => {
+    const regionBtn = e.target.closest(".book-toc-filter[data-region]");
+    const savedBtn  = e.target.closest(".book-toc-filter[data-saved]");
+    if (regionBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      CURRENT_FILTER.region = regionBtn.dataset.region;
+      applyFilterAndRebuild();
+      return;
+    }
+    if (savedBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      CURRENT_FILTER.savedOnly = !CURRENT_FILTER.savedOnly;
+      applyFilterAndRebuild();
+      return;
+    }
+  }, true);
+}
+
+// ============== Region filter bar — persistent bottom strip ==============
+//
+// Renders two rows: regions (always) + prefectures (only when a region
+// is active). Counts reflect the FULL event set (not post-filter), so the
+// user sees how much each region/prefecture contains *before* drilling in.
+// Picking a region narrows; picking a prefecture narrows further; clicking
+// the active chip again resets that level.
+function setupRegionBar() {
+  const allEvents = window.__YORO_ALL_EVENTS__ || [];
+  const regionChips = document.getElementById("regionChips");
+  const prefChips   = document.getElementById("prefectureChips");
+  const bar         = document.getElementById("regionBar");
+  const savedBtn    = document.getElementById("regionBarSaved");
+  if (!regionChips || !prefChips || !bar || !savedBtn) return;
+
+  // Count events per region, computed against the un-filtered set so the
+  // numbers stay stable as the user toggles filters.
+  const regionCounts = { all: allEvents.length };
+  for (const ev of allEvents) {
+    const r = REGIONS[ev.prefecture];
+    if (r) regionCounts[r] = (regionCounts[r] || 0) + 1;
+  }
+
+  // First row — regions. Hide regions with zero events (avoid empty
+  // chips when the dataset doesn't cover a region yet).
+  regionChips.innerHTML = REGION_DISPLAY
+    .filter(r => r.key === "all" || (regionCounts[r.key] || 0) > 0)
+    .map(r => {
+      const isActive = CURRENT_FILTER.region === r.key;
+      const count = regionCounts[r.key] || 0;
+      return `<button class="region-chip${isActive ? ' is-active' : ''}"
+                       type="button"
+                       data-region="${r.key}"
+                       aria-pressed="${isActive}"
+                       aria-label="${r.label.replace(/\s/g, '')}，${count} 件">
+                ${r.label}<span class="region-chip__count" aria-hidden="true">${count}</span>
+              </button>`;
+    }).join("");
+
+  // Second row — prefectures within the active region. Re-built every
+  // time the active region changes.
+  function renderPrefectureRow() {
+    const region = CURRENT_FILTER.region;
+    if (region === "all") {
+      bar.classList.remove("has-prefectures");
+      prefChips.innerHTML = "";
+      return;
+    }
+    // Count prefectures in this region from the full event set
+    const prefCounts = {};
+    for (const ev of allEvents) {
+      if (REGIONS[ev.prefecture] !== region) continue;
+      prefCounts[ev.prefecture] = (prefCounts[ev.prefecture] || 0) + 1;
+    }
+    const prefs = Object.entries(prefCounts)
+      .sort((a, b) => b[1] - a[1]);   // most-events-first
+    if (!prefs.length) {
+      bar.classList.remove("has-prefectures");
+      prefChips.innerHTML = "";
+      return;
+    }
+    prefChips.innerHTML = prefs.map(([pref, count]) => {
+      const isActive = CURRENT_FILTER.prefecture === pref;
+      const display = PREFECTURE_DISPLAY[pref] || pref;
+      return `<button class="region-chip${isActive ? ' is-active' : ''}"
+                       type="button"
+                       data-prefecture="${pref}"
+                       aria-pressed="${isActive}"
+                       aria-label="${display}，${count} 件">
+                ${display}<span class="region-chip__count" aria-hidden="true">${count}</span>
+              </button>`;
+    }).join("");
+    bar.classList.add("has-prefectures");
+  }
+  renderPrefectureRow();
+
+  // Saved-only toggle state
+  function syncSaved() {
+    savedBtn.classList.toggle("is-active", CURRENT_FILTER.savedOnly);
+    savedBtn.setAttribute("aria-pressed", String(CURRENT_FILTER.savedOnly));
+  }
+  syncSaved();
+
+  // Click handler — region/prefecture/saved. Bound only once per bar
+  // (we guard with __rb_bound to survive subsequent setupRegionBar()
+  // re-renders without piling up duplicate listeners).
+  if (!bar.__rb_bound) {
+    bar.__rb_bound = true;
+    bar.addEventListener("click", (e) => {
+      const prefBtn   = e.target.closest("[data-prefecture]");
+      const regionBtn = e.target.closest("[data-region]");
+      const savedToggle = e.target.closest("#regionBarSaved");
+      // IMPORTANT: check prefecture BEFORE region — a prefecture chip is
+      // the deeper element, so a region-chip ancestor (none expected) or
+      // a stray match would otherwise capture the event.
+      if (prefBtn) {
+        const p = prefBtn.dataset.prefecture;
+        CURRENT_FILTER.prefecture = (CURRENT_FILTER.prefecture === p) ? null : p;
+        setupRegionBar();
+        applyFilterAndRebuild();
+        return;
+      }
+      if (regionBtn) {
+        const k = regionBtn.dataset.region;
+        // Re-clicking active region resets to "all"
+        if (CURRENT_FILTER.region === k && k !== "all") {
+          CURRENT_FILTER.region = "all";
+        } else {
+          CURRENT_FILTER.region = k;
+        }
+        CURRENT_FILTER.prefecture = null;  // any region change clears prefecture
+        setupRegionBar();                  // re-render both rows
+        applyFilterAndRebuild();
+        return;
+      }
+      if (savedToggle) {
+        CURRENT_FILTER.savedOnly = !CURRENT_FILTER.savedOnly;
+        syncSaved();
+        applyFilterAndRebuild();
+        return;
+      }
+    });
+  }
+}
+
+// ============== Inline book TOC — clickable chapter list ==============
+const TOC_PAGE = 3;  // recto of the TOC spread (the list, not the half-title)
+
+function setupBookTOC() {
+  document.addEventListener("click", (e) => {
+    const row = e.target.closest(".book-toc-row[data-target-page]");
+    if (!row) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const page = parseInt(row.dataset.targetPage, 10);
+    if (!isNaN(page) && pageFlip && !Postcard.open) {
+      pageFlip.flip(page, "top");
+    }
+  }, true);
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const row = document.activeElement && document.activeElement.closest(".book-toc-row[data-target-page]");
+    if (!row) return;
+    e.preventDefault();
+    const page = parseInt(row.dataset.targetPage, 10);
+    if (!isNaN(page) && pageFlip) pageFlip.flip(page, "top");
+  });
+
+  // Ribbon bookmark — jump back to TOC
+  // Re-parent the ribbon into .book-pages-frame so it anchors to the
+  // book's actual position (the book is flex-centered in the viewport,
+  // so a fixed-position ribbon at the viewport top drifts away from
+  // the book when the viewport is taller than the book).
+  const ribbon = document.getElementById("bookRibbon");
+  if (ribbon) {
+    const frame = document.getElementById("bookPagesFrame");
+    if (frame && ribbon.parentElement !== frame) {
+      frame.appendChild(ribbon);
+    }
+    ribbon.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!pageFlip || Postcard.open) return;
+      pageFlip.flip(TOC_PAGE, "top");
+    });
+  }
+
+  // Hide ribbon while user IS on a TOC page + highlight active chapter tab
+  function updateChapterUI() {
+    if (!pageFlip) return;
+    const cur = pageFlip.getCurrentPageIndex();
+    const onToc = (cur === 2 || cur === 3);
+    document.body.classList.toggle("on-toc", onToc);
+    const info = CHAPTER_BY_PAGE[cur];
+    const activeKey = onToc ? "toc" : (info && info.key) || null;
+    document.querySelectorAll(".chapter-tab").forEach(t => {
+      t.classList.toggle("active", t.dataset.chapter === activeKey);
+    });
+  }
+  if (pageFlip) {
+    pageFlip.on("flip", updateChapterUI);
+    pageFlip.on("changeState", updateChapterUI);
+    updateChapterUI();
+  }
+
+  // Click any thumb tab → jump to that chapter / TOC
+  document.addEventListener("click", (e) => {
+    const tab = e.target.closest(".chapter-tab[data-target-page]");
+    if (!tab) return;
+    e.preventDefault(); e.stopPropagation();
+    const page = parseInt(tab.dataset.targetPage, 10);
+    if (!isNaN(page) && pageFlip && !Postcard.open) {
+      pageFlip.flip(page, "top");
+    }
+  }, true);
+
+  // Number-key shortcuts: 0 = TOC, 1-7 = chapters I-VII
+  document.addEventListener("keydown", (e) => {
+    if (Postcard.open) return;
+    if (e.target && typeof e.target.matches === "function"
+        && e.target.matches("input, textarea, select")) return;
+    if (document.body.classList.contains("book-intro-active")) return;
+    if (e.key === "0") {
+      e.preventDefault();
+      if (pageFlip) pageFlip.flip(TOC_PAGE, "top");
+    } else if (/^[1-9]$/.test(e.key)) {
+      e.preventDefault();
+      const idx = parseInt(e.key, 10);
+      const tab = document.querySelectorAll('.chapter-tab[data-chapter]:not([data-chapter="toc"])')[idx - 1];
+      if (tab) {
+        const page = parseInt(tab.dataset.targetPage, 10);
+        if (pageFlip) pageFlip.flip(page, "top");
+      }
+    }
+  });
+}
+
+// ============== Favorites · saved postcard collection ==============
+const SAVED_KEY = "yoro:saved";
+const Favorites = {
+  list() {
+    try { return JSON.parse(localStorage.getItem(SAVED_KEY) || "[]"); }
+    catch { return []; }
+  },
+  has(id) { return this.list().includes(id); },
+  toggle(id) {
+    const arr = this.list();
+    const i = arr.indexOf(id);
+    if (i >= 0) arr.splice(i, 1); else arr.push(id);
+    localStorage.setItem(SAVED_KEY, JSON.stringify(arr));
+    this.updateCounter();
+    return i < 0;  // true if now saved
+  },
+  updateCounter() {
+    const n = this.list().length;
+    // Region-bar saved chip count
+    const rbCount = document.getElementById("regionBarSavedCount");
+    if (rbCount) rbCount.textContent = n;
+    // Legacy footer counter (if still in DOM)
+    const el = document.getElementById("savedCounter");
+    const num = document.getElementById("savedCount");
+    if (el && num) {
+      num.textContent = n;
+      el.classList.toggle("has-items", n > 0);
+    }
+  },
+};
+
+// ============== Postcard · event detail overlay ==============
+const Postcard = {
+  stage: null, card: null, open: false, currentId: null,
+
+  init() {
+    this.stage = document.getElementById("postcardStage");
+    this.card  = document.getElementById("postcard");
+    if (!this.stage || !this.card) return;
+    Favorites.updateCounter();
+
+    // Entry click → open postcard (capture phase so we beat StPageFlip)
+    document.addEventListener("click", (e) => {
+      if (this.open) return;
+      const entry = e.target.closest(".book-entry");
+      if (!entry) return;
+      const id = entry.getAttribute("data-event-id");
+      const ev = id && EVENT_MAP[id];
+      if (!ev) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.openCard(entry, ev);
+    }, true);
+
+    // Keyboard: enter/space on focused entry, ESC to close
+    document.addEventListener("keydown", (e) => {
+      if (this.open && e.key === "Escape") {
+        e.preventDefault(); this.close();
+        return;
+      }
+      if (!this.open && (e.key === "Enter" || e.key === " ")) {
+        const entry = document.activeElement && document.activeElement.closest(".book-entry");
+        if (entry) {
+          e.preventDefault();
+          const ev = EVENT_MAP[entry.getAttribute("data-event-id")];
+          if (ev) this.openCard(entry, ev);
+        }
+      }
+    });
+
+    // Click postcard itself → flip
+    this.card.addEventListener("click", (e) => {
+      if (e.target.closest(".postcard-close, .postcard-back-link")) return;
+      this.card.classList.toggle("flipped");
+    });
+
+    // Click outside (stage but not card) → close
+    this.stage.addEventListener("click", (e) => {
+      if (e.target === this.stage) this.close();
+    });
+
+    // Close button
+    document.getElementById("postcardClose").addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.close();
+    });
+
+    // Save (favorite) button
+    const saveBtn = document.getElementById("postcardSave");
+    if (saveBtn) {
+      saveBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!this.currentId) return;
+        const nowSaved = Favorites.toggle(this.currentId);
+        this.card.classList.toggle("saved", nowSaved);
+      });
+    }
+  },
+
+  openCard(sourceEntry, ev) {
+    // Animate from the clicked entry's position toward the center
+    const srcRect = sourceEntry.getBoundingClientRect();
+    const fromX = (srcRect.left + srcRect.width  / 2) - innerWidth  / 2;
+    const fromY = (srcRect.top  + srcRect.height / 2) - innerHeight / 2;
+    this.card.style.setProperty("--from-x", fromX + "px");
+    this.card.style.setProperty("--from-y", fromY + "px");
+    this.card.classList.remove("flipped");
+    // Chapter color (stamp + postmark + link tint)
+    const chKey = (function () {
+      for (const sec of SECTIONS) {
+        if (sec.key !== "other" && sec.match(ev)) return sec.key;
+      }
+      return "other";
+    })();
+    this.card.setAttribute("data-chapter", chKey);
+    // Sync save state for this event
+    this.currentId = ev.id;
+    this.card.classList.toggle("saved", Favorites.has(ev.id));
+
+    // Populate fields
+    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    const img = document.getElementById("postcardImg");
+    if (img) {
+      if (ev.image_url) {
+        img.style.backgroundImage = `url('${ev.image_url.replace(/'/g, "%27")}')`;
+        img.classList.remove("postcard-img--empty");
+        img.innerHTML = "";
+      } else {
+        img.style.backgroundImage = "";
+        img.classList.add("postcard-img--empty");
+        img.innerHTML = `<span class="postcard-img-kanji">${escapeHTML(ev.kanji || "祭")}</span>`;
+      }
+    }
+    setText("postcardTitle", ev.title_zh || ev.title_ja || "—");
+    setText("postcardTitleJp", ev.title_ja && (ev.title_zh !== ev.title_ja) ? ev.title_ja : "");
+    // Description preview on front (truncated)
+    const desc = (ev.description_zh || ev.description_ja || "").trim();
+    setText("postcardFrontDesc", desc || "");
+    setText("postcardMetaDate",  fmtDate(ev.date_start, ev.date_end));
+    setText("postcardMetaPlace", ev.prefecture || "");
+    setText("postcardStampK",    ev.kanji || "祭");
+    // Back
+    setText("postcardBackFrom",  (ev.prefecture || "") + " · " + (ev.venue ? ev.venue.slice(0, 12) : ""));
+    setText("postcardBackDate",  fmtDate(ev.date_start, ev.date_end));
+    setText("postcardBackVenue", ev.venue || ev.title_zh || ev.title_ja);
+    setText("postcardBackJp",    ev.title_ja || "");
+    setText("postcardBackDesc",  ev.description_zh || ev.description_ja || "（暂无描述）");
+    const link = document.getElementById("postcardBackLink");
+    if (ev.url) { link.href = ev.url; link.style.display = ""; }
+    else        { link.style.display = "none"; }
+    setText("postcardPostmark",     (ev.prefecture || "").slice(0, 4));
+    setText("postcardPostmarkDate", (ev.date_start || "").replace(/-/g, "."));
+
+    // Force a reflow then mark open (so transform interpolates from origin)
+    void this.card.offsetWidth;
+    this.stage.classList.add("open");
+    this.stage.setAttribute("aria-hidden", "false");
+    this.open = true;
+  },
+
+  close() {
+    if (!this.open) return;
+    this.stage.classList.remove("open");
+    this.stage.setAttribute("aria-hidden", "true");
+    this.open = false;
+  },
+};
+
+function setupPostcard() { Postcard.init(); }
+
+// ============== M2 · Page builders ==============
+const ROMAN_NUM = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+// Mapping page index → chapter info, populated by buildBookPages so the
+// footer can show "立 夏 卷 · 第 II 章 · 自 然" as you flip.
+let CHAPTER_BY_PAGE = [];
+// Mapping event id → event, so postcard click can look up rich data
+let EVENT_MAP = {};
+
+// Filter state (region + prefecture + saved-only). The bottom region-bar
+// is the canonical UI for changing these; .book-toc-filter chips on the
+// TOC page were removed in favor of the persistent bar.
+const CURRENT_FILTER = { region: "all", prefecture: null, savedOnly: false };
+const REGIONS_LABEL = Object.fromEntries(REGION_DISPLAY.map(r => [r.key, r.label]));
+
+function applyFilter(events) {
+  let out = events;
+  if (CURRENT_FILTER.region !== "all") {
+    out = out.filter(ev => REGIONS[ev.prefecture] === CURRENT_FILTER.region);
+  }
+  if (CURRENT_FILTER.prefecture) {
+    out = out.filter(ev => ev.prefecture === CURRENT_FILTER.prefecture);
+  }
+  if (CURRENT_FILTER.savedOnly) {
+    const set = new Set(Favorites ? Favorites.list() : []);
+    out = out.filter(ev => set.has(ev.id));
+  }
+  return out;
+}
+
+function applyFilterAndRebuild() {
+  const filtered = applyFilter(window.__YORO_ALL_EVENTS__ || []);
+  if (pageFlip) {
+    try { pageFlip.destroy(); } catch (e) {}
+    pageFlip = null;
+  }
+  // StPageFlip.destroy() removes the #bookFlip element entirely; recreate it.
+  if (!document.getElementById("bookFlip")) {
+    const frame = document.querySelector(".book-pages-frame");
+    const fresh = document.createElement("div");
+    fresh.className = "book-flip";
+    fresh.id = "bookFlip";
+    // Insert before the prev nav button so z-order/positioning matches
+    const firstChild = frame.firstElementChild;
+    if (firstChild) frame.insertBefore(fresh, firstChild);
+    else frame.appendChild(fresh);
+  }
+  setupPagedBook(filtered);
+}
+
+function escapeHTML(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+
+// Map chapter key → stamp color (mirrors postcard .postcard[data-chapter])
+const CHAPTER_COLOR = {
+  featured: '#2a1a10', nature: '#5c6b4f', food: '#967a4f',
+  matsuri:  '#a8362a', live:   '#8b3a4e', art:  '#4a4675',
+  sports:   '#3d6691',
+};
+function chapterColorFor(ev) {
+  for (const sec of SECTIONS) {
+    if (sec.key !== 'other' && sec.match(ev)) return CHAPTER_COLOR[sec.key] || '#a8362a';
+  }
+  return '#a8362a';
+}
+
+function entryHTMLForBook(ev, num) {
+  // Store the rich event so the postcard can look it up by id on click
+  EVENT_MAP[ev.id] = ev;
+  const title = escapeHTML(ev.title_zh || ev.title_ja || '');
+  const venue = escapeHTML(ev.venue || '');
+  const desc = escapeHTML((ev.description_zh || ev.description_ja || '').slice(0, 70));
+  const date = fmtDate(ev.date_start, ev.date_end);
+  const pref = escapeHTML(ev.prefecture || '');
+  let thumbHTML;
+  if (ev.image_url) {
+    thumbHTML = `<div class="book-entry__thumb" style="background-image:url('${escUrl(ev.image_url)}')"></div>`;
+  } else {
+    const color = chapterColorFor(ev);
+    const kanji = escapeHTML(ev.kanji || '祭');
+    thumbHTML = `<div class="book-entry__thumb book-entry__thumb--empty" style="--thumb-color:${color}">
+                   <span class="book-entry__thumb-kanji">${kanji}</span>
+                 </div>`;
+  }
+  return `
+    <div class="book-entry" data-event-id="${escapeHTML(ev.id)}" role="button" tabindex="0">
+      <span class="book-entry__num">N° ${padNum(num)}</span>
+      ${thumbHTML}
+      <div>
+        <div class="book-entry__title">${title}</div>
+        <div class="book-entry__meta">${date} · ${pref}</div>
+        ${venue ? `<div class="book-entry__venue">${venue}</div>` : ''}
+        ${desc ? `<div class="book-entry__desc">${desc}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+// How many entries fit on a single content page, derived from the current
+// viewport. The paged book height follows the formula in .book-flip:
+//   min(900, (100vw-100)*0.75, 100vh-220)
+// (subtracted height now accounts for the new region-bar between the
+// pages and the printed footer.)
+// Each entry occupies ~128px on average — the thumb is 78, top/bottom
+// padding is 24, and the description usually wraps to 2 lines (~26).
+// CHROME covers running-head + folio + page top/bottom padding.
+// We round DOWN with a generous estimate so the last entry never gets
+// clipped at the bottom of the page (a clipped row is a worse outcome
+// than an extra page).
+function computePerPage() {
+  const vw = Math.max(320, window.innerWidth);
+  const vh = Math.max(400, window.innerHeight);
+  const bookHeight = Math.min(900, (vw - 80) * 0.75, vh - 160);
+  const ENTRY_H = 128;
+  const CHROME  = 140;
+  const capacity = Math.floor((bookHeight - CHROME) / ENTRY_H);
+  return Math.max(3, Math.min(6, capacity));
+}
+
+function buildBookPages(events) {
+  const container = document.getElementById('bookFlip');
+  if (!container) return 0;
+  container.innerHTML = '';
+  const pages = [];
+  CHAPTER_BY_PAGE = [];
+  EVENT_MAP = {};
+  const recordChapter = (info) => {
+    CHAPTER_BY_PAGE[pages.length] = info;  // index of page about to push
+  };
+  const PER_PAGE = computePerPage();
+
+  // ─── PASS 1: plan chapter positions so the TOC can link to them ────
+  // Pages 0-1 = title spread, pages 2-3 = TOC spread. Chapters start at
+  // index 4. Each chapter is ONE opener page + N content pages — no
+  // separate "marker" verso, no padding filler between chapters. The
+  // opener carries the "— 章 之 始 —" eyebrow above the big kanji, so
+  // the chapter break is still clearly signaled but we don't burn two
+  // near-empty pages per chapter (especially painful on mobile, where
+  // each page is a full screen).
+  let planPos = 4;
+  const chapterPlans = [];
+  for (const sec of SECTIONS) {
+    if (sec.key === 'other') continue;
+    const chapEvents = events.filter(e => sec.match(e));
+    if (!chapEvents.length) continue;
+    const openerPage = planPos;
+    const contentPages = Math.ceil(chapEvents.length / PER_PAGE);
+    planPos += 1 + contentPages;     // 1 opener + content
+    chapterPlans.push({
+      sec, events: chapEvents,
+      roman: ROMAN_NUM[chapterPlans.length] || String(chapterPlans.length + 1),
+      eventCount: chapEvents.length,
+      startPage: openerPage,
+      openerPage,
+    });
+  }
+
+  // ─── PASS 2 · Front matter (title spread, pages 0 & 1) ──────
+  // The .book-intro overlay sits on top of the paged book showing a
+  // closed-book panel. When the user clicks it we dismiss the overlay
+  // and trigger a real StPageFlip flipNext() so the title spread turns
+  // into the TOC spread with the library's native corner-curl physics.
+  recordChapter({ label: '立 夏 卷 · 二〇二六' });
+  pages.push({
+    cls: 'page--left',
+    html: `<div class="title-monogram" style="margin:auto;">Y</div>
+           <span class="folio folio--left folio--running">YORO · 立夏 卷</span>`
+  });
+  recordChapter({ label: '立 夏 卷 · 二〇二六' });
+  pages.push({
+    cls: 'page--right',
+    html: `<div class="title-eyebrow">YORO · LETTERS FROM AFAR</div>
+           <div class="title-main">立夏</div>
+           <div class="title-romaji">RIKKA · 2026</div>
+           <div class="title-rule"></div>
+           <div class="title-issue">第 五 卷 · No. 05</div>
+           <div class="title-tagline">— Letters from afar, one chapter at a time —</div>
+           <span class="folio folio--right">i</span>`
+  });
+
+  // ─── PASS 2 · TOC spread (pages 2 & 3) ───────────────────────
+  recordChapter({ label: '目 錄 · CONTENTS' });
+  pages.push({
+    cls: 'page--left',
+    html: `<div class="book-toc-cover">
+             <div class="book-toc-cover__title">目 錄</div>
+             <div class="book-toc-cover__sub">— CONTENTS —</div>
+             <div class="book-toc-cover__rule"></div>
+             <div class="book-toc-cover__count">本 期 凡 ${chapterPlans.length} 章 · 共 ${events.length} 件</div>
+           </div>
+           <span class="folio folio--left">ii</span>`
+  });
+  recordChapter({ label: '目 錄 · CONTENTS' });
+  // Filter chips are no longer rendered on the TOC page — the persistent
+  // .region-bar below the spread is the single, always-accessible UI.
+  pages.push({
+    cls: 'page--right',
+    html: `<div class="book-toc-header">本 期 目 錄 · TABLE OF CONTENTS</div>
+           <ol class="book-toc-list">
+             ${chapterPlans.map(p => `
+               <li class="book-toc-row" data-target-page="${p.openerPage}" role="button" tabindex="0">
+                 <span class="book-toc-row__num">${p.roman}</span>
+                 <span class="book-toc-row__kanji">${p.sec.kanji}</span>
+                 <span class="book-toc-row__name">${escapeHTML(p.sec.zh)}</span>
+                 <span class="book-toc-row__count">${p.eventCount} 件</span>
+                 <span class="book-toc-row__page">p.${padNum(p.openerPage)}</span>
+               </li>`).join('')}
+           </ol>
+           <span class="folio folio--right">iii</span>`
+  });
+
+  // ─── PASS 2 · Chapters ───────────────────────────────────────
+  let pageCounter = 1;       // arabic counter for content pages
+  for (const plan of chapterPlans) {
+    const sec = plan.sec;
+    const chapEvents = plan.events;
+    const roman = plan.roman;
+
+    const chapterInfo = {
+      key: sec.key, roman, zh: sec.zh,
+      label: `立 夏 卷 · 第 ${roman} 章 · ${sec.zh}`,
+    };
+
+    // Opener page — falls on either LEFT or RIGHT depending on where
+    // the previous chapter's content left us. No padding filler, no
+    // separate marker verso: a single page carries the chapter break,
+    // with "— 章 之 始 —" eyebrow + big kanji + epigraph all together.
+    const openerIsLeft = pages.length % 2 === 0;
+    recordChapter(chapterInfo);
+    pages.push({
+      cls: openerIsLeft ? 'page--left' : 'page--right',
+      html: `<div class="chapter-marker">— 章 之 始 —</div>
+             <div class="chapter-num">第 ${roman} 章 · CHAPTER ${roman}</div>
+             <div class="chapter-kanji">${sec.kanji}</div>
+             <div class="chapter-name-zh">${escapeHTML(sec.zh)}</div>
+             <div class="chapter-name-en">${escapeHTML(sec.en)}</div>
+             <div class="chapter-epigraph">${escapeHTML(sec.epigraph_zh)}</div>
+             <div class="chapter-epigraph-en">— ${escapeHTML(sec.epigraph_en)}</div>
+             <div class="chapter-count">全 <strong>${chapEvents.length}</strong> 件</div>
+             <span class="folio folio--${openerIsLeft ? 'left' : 'right'}">${padNum(pageCounter++)}</span>`
+    });
+
+    // Content pages — adaptive entries per page (PER_PAGE derived from
+    // viewport in computePerPage()); each has a running head at top
+    for (let i = 0; i < chapEvents.length; i += PER_PAGE) {
+      const chunk = chapEvents.slice(i, i + PER_PAGE);
+      const isLeft = pages.length % 2 === 0; // showCover:false → even=LEFT
+      const entries = chunk.map((ev, j) =>
+        entryHTMLForBook(ev, i + j + 1)
+      ).join('');
+      const folioCls = isLeft ? 'folio--left' : 'folio--right';
+      // Running head: verso shows the issue masthead, recto shows chapter
+      const runHead = isLeft
+        ? `<div class="running-head running-head--left">
+             <span class="accent">YORO</span>立 夏 · No. 05
+           </div>`
+        : `<div class="running-head running-head--right">第 ${roman} 章 · ${escapeHTML(sec.zh)}</div>`;
+      recordChapter(chapterInfo);
+      pages.push({
+        cls: (isLeft ? 'page--left' : 'page--right') + ' page--has-runhead',
+        html: `${runHead}${entries}
+               <span class="folio ${folioCls}">${padNum(pageCounter++)}</span>`
+      });
+    }
+  }
+
+  // ─── Back matter ─────────────────────────────────────────────
+  // End-of-volume spread starts on LEFT (even index, showCover:false)
+  if (pages.length % 2 !== 0) {
+    recordChapter({ label: '立 夏 卷 · 二〇二六' });
+    pages.push({ cls: 'page--right', html: `<span></span>` });
+  }
+  recordChapter({ label: '末 章 · END OF VOLUME' });
+  pages.push({
+    cls: 'page--left',
+    html: `<div style="margin:auto;text-align:center;">
+             <div style="font-family:'Noto Serif SC';font-size:22px;color:var(--ink-soft);letter-spacing:0.3em;margin-bottom:12px;">— 末 章 —</div>
+             <div style="font-family:'Cormorant Garamond';font-style:italic;color:var(--ink-faint);font-size:14px;">END OF VOLUME</div>
+           </div>
+           <span class="folio folio--left folio--running">${padNum(pageCounter++)}</span>`
+  });
+  recordChapter({ label: '末 章 · END OF VOLUME' });
+  pages.push({
+    cls: 'page--right',
+    html: `<div style="margin:auto;text-align:center;max-width:32em;">
+             <div style="font-family:'Noto Serif SC';font-weight:600;font-size:20px;color:var(--ink);margin-bottom:18px;">让远方，近些。</div>
+             <div style="font-family:'Cormorant Garamond';font-style:italic;color:var(--ink-soft);font-size:14px;margin-bottom:40px;">Bringing the far, near.</div>
+             <div class="title-rule" style="margin:0 auto 32px;"></div>
+             <div style="font-family:'JetBrains Mono';font-size:10px;color:var(--ink-faint);letter-spacing:0.28em;">© YORO 2026 · 远 方 来 信</div>
+             <div style="font-family:'JetBrains Mono';font-size:10px;color:var(--ink-faint);letter-spacing:0.18em;margin-top:8px;">UPDATED ${escapeHTML(window.__YORO_UPDATED__ || '—')}</div>
+           </div>
+           <span class="folio folio--right">${padNum(pageCounter)}</span>`
+  });
+
+  for (const p of pages) {
+    const div = document.createElement('div');
+    div.className = `page ${p.cls}`;
+    div.innerHTML = p.html;
+    container.appendChild(div);
+  }
+  buildChapterTabs(chapterPlans);
+  window.__chapterPlans = chapterPlans;
+  console.log(`[Book] built ${pages.length} pages from ${events.length} events`);
+  return pages.length;
+}
+
+function buildChapterTabs(chapterPlans) {
+  const container = document.getElementById('chapterTabs');
+  if (!container) return;
+  container.innerHTML = '';
+  // TOC tab first
+  const tocTab = document.createElement('button');
+  tocTab.className = 'chapter-tab';
+  tocTab.type = 'button';
+  tocTab.dataset.targetPage = '3';
+  tocTab.dataset.chapter = 'toc';
+  tocTab.title = '目 录 · TOC (press 0)';
+  tocTab.innerHTML = `目<span class="tab-key">0</span>`;
+  container.appendChild(tocTab);
+  // Chapter tabs
+  chapterPlans.forEach((plan, i) => {
+    const tab = document.createElement('button');
+    tab.className = 'chapter-tab';
+    tab.type = 'button';
+    tab.dataset.targetPage = plan.openerPage;
+    tab.dataset.chapter = plan.sec.key;
+    tab.title = `第 ${plan.roman} 章 · ${plan.sec.zh} (press ${i + 1})`;
+    tab.innerHTML = `${plan.sec.kanji}<span class="tab-key">${i + 1}</span>`;
+    container.appendChild(tab);
+  });
+}
+
+// ============== M1 · Paged Book (powered by StPageFlip) ==============
+// StPageFlip handles all the 3D paper physics — corner curl, shadows,
+// drag, fold. We provide flat .page elements and a config; it owns
+// the rendering and animation.
+let pageFlip = null;
+
+const PagedBook = {
+  get current() { return pageFlip ? pageFlip.getCurrentPageIndex() : 0; },
+  get total()   { return pageFlip ? pageFlip.getPageCount() : 0; },
+  // Drop calls that arrive while another flip is animating. StPageFlip's
+  // state machine breaks if we issue a new flip mid-animation (leaves a
+  // leaf stuck halfway). The dropped call is fine — the user re-clicks
+  // when the page is settled.
+  _busy() { return pageFlip && pageFlip.getState() !== "read"; },
+  next() { if (pageFlip && !this._busy()) pageFlip.flipNext("top"); },
+  prev() { if (pageFlip && !this._busy()) pageFlip.flipPrev("top"); },
+  goTo(idx) {
+    if (!pageFlip || this._busy()) return;
+    pageFlip.flip(idx, "top");
+  },
+};
+
+function setupPagedBook(events) {
+  if (typeof St === "undefined" || !St.PageFlip) {
+    console.warn("[PageFlip] library not loaded");
+    return;
+  }
+  const el = document.getElementById("bookFlip");
+  if (!el) return;
+
+  // M2: replace any hardcoded sample pages with auto-generated ones
+  if (events && events.length) {
+    buildBookPages(events);
+  }
+
+  // Compute base book dimensions from the available viewport
+  const frame = document.getElementById("bookPagesFrame");
+  const fr = frame.getBoundingClientRect();
+  // Single-spread aspect: roughly 2:1 (wide spread). With page-flip's
+  // size: 'stretch', it'll auto-fit, but we give it sensible defaults.
+  const baseW = Math.min(560, fr.width * 0.48);
+  const baseH = Math.min(840, fr.height * 0.92);
+
+  // Cap book height so the printed footer (40px below) stays in viewport.
+  // Book-volume ends at viewport-bottom - 64px. Each page is 4:3 portrait
+  // → spread aspect 4:3 landscape. Library's maxHeight is per-page.
+  const viewportCap = Math.max(380, window.innerHeight - 160);
+  pageFlip = new St.PageFlip(el, {
+    width: baseW,
+    height: baseH,
+    size: "stretch",
+    minWidth: 280,  maxWidth: 700,
+    minHeight: 380, maxHeight: viewportCap,
+    // We keep showCover:false because StPageFlip 2.0.7 hangs in 'flipping'
+    // state when flipNext() is called from a hard cover. Instead the
+    // closed-book intro lives in the .book-intro overlay and the real
+    // page-turn happens via flipNext() against a normal soft spread.
+    showCover: false,
+    showPageCorners: true,
+    swipeDistance: 30,
+    flippingTime: 620,
+    drawShadow: true,
+    useMouseEvents: true,
+    mobileScrollSupport: false,
+    usePortrait: true,
+    autoSize: true,
+  });
+  pageFlip.loadFromHTML(el.querySelectorAll(".page"));
+
+  // Update the bottom indicator on every flip
+  const indCurrent = document.getElementById("pageCurrent");
+  const indTotal   = document.getElementById("pageTotal");
+  if (indTotal) indTotal.textContent = pageFlip.getPageCount();
+  const indLabel = document.getElementById("ftChapterLabel");
+  const progressMarker = document.getElementById("bookProgressMarker");
+  const updateIndicator = () => {
+    if (!indCurrent) return;
+    const cur = pageFlip.getCurrentPageIndex();
+    const total = pageFlip.getPageCount();
+    // Folio: zero-pad three digits so the printed-book footer feels typeset
+    indCurrent.textContent = String(cur).padStart(3, "0");
+    if (indTotal) indTotal.textContent = String(total).padStart(3, "0");
+    if (indLabel && CHAPTER_BY_PAGE[cur]) {
+      indLabel.textContent = CHAPTER_BY_PAGE[cur].label;
+    }
+    // Right margin · progress rail marker
+    if (progressMarker && total > 1) {
+      progressMarker.style.top = ((cur / (total - 1)) * 100).toFixed(2) + "%";
+    }
+    document.getElementById("pagePrev").disabled = cur === 0;
+    document.getElementById("pageNext").disabled = cur >= total - 1;
+  };
+  pageFlip.on("flip", updateIndicator);
+  pageFlip.on("changeState", updateIndicator);
+  updateIndicator();
+
+  // Wire prev/next buttons + keyboard
+  document.getElementById("pagePrev").addEventListener("click", (e) => {
+    e.stopPropagation(); PagedBook.prev();
+  });
+  document.getElementById("pageNext").addEventListener("click", (e) => {
+    e.stopPropagation(); PagedBook.next();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.target && typeof e.target.matches === "function"
+        && e.target.matches("input, textarea")) return;
+    if (document.body.classList.contains("book-intro-active")) return;
+    if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") {
+      e.preventDefault(); PagedBook.next();
+    } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+      e.preventDefault(); PagedBook.prev();
+    } else if (e.key === "Home") {
+      e.preventDefault(); PagedBook.goTo(0);
+    } else if (e.key === "End") {
+      e.preventDefault(); PagedBook.goTo(pageFlip.getPageCount() - 1);
+    }
+  });
+
+  // Wheel → flip. Throttle adapts to scroll velocity: fast scrolls unlock
+  // sooner so power users can rapidly flip multiple pages.
+  let wheelLock = false;
+  frame.addEventListener("wheel", (e) => {
+    if (document.body.classList.contains("book-intro-active")) return;
+    e.preventDefault();
+    if (wheelLock) return;
+    const delta = e.deltaY || e.deltaX;
+    const mag = Math.abs(delta);
+    if (mag < 4) return;
+    wheelLock = true;
+    // Velocity-aware throttle:
+    //   slow scroll (<40px)   → 520ms lock (gentle)
+    //   medium (40-100)       → 360ms
+    //   fast (>100, e.g. trackpad swipe / mouse fast wheel) → 240ms
+    const lockMs = mag < 40 ? 520 : (mag < 100 ? 360 : 240);
+    setTimeout(() => { wheelLock = false; }, lockMs);
+    if (delta > 0) PagedBook.next();
+    else PagedBook.prev();
+  }, { passive: false });
+}
+
+// ============== Book Intro (Cover → TOC spread) ==============
+// The intro is now part of the paged book itself: page 0 is rendered as a
+// closed-book cover by StPageFlip (showCover:true), and clicking it
+// performs a real corner-curl flip into the TOC spread. The legacy
+// overlay (#bookIntro) is unused in paged mode — hidden + no-op'd here.
+const TOC_ROMAN = ["I","II","III","IV","V","VI","VII","VIII"];
+const TOC_PAGES = ["012","044","078","118","156","198","218","236"];
+
+function setupBookIntro(events) {
+  const intro = $("#bookIntro");
+  if (!intro) return;
+  // Build TOC rows from the SECTIONS array (skip 'featured' & 'other' from the
+  // chapter list — featured is a curation, other is a residual bucket).
+  const chapters = SECTIONS.filter(s => s.key !== 'featured' && s.key !== 'other');
+  const counts = {};
+  for (const ev of events) {
+    for (const s of chapters) {
+      if (s.match(ev)) { counts[s.key] = (counts[s.key] || 0) + 1; break; }
+    }
+  }
+  const list = $("#tocList");
+  list.innerHTML = chapters.map((s, i) => `
+    <li class="toc-row" data-key="${s.key}" style="--row-idx: ${i}" tabindex="0">
+      <span class="toc-num">${TOC_ROMAN[i] || (i+1)}</span>
+      <span class="toc-kanji">${s.kanji}</span>
+      <span class="toc-dots"></span>
+      <span class="toc-name">${s.zh}</span>
+      <span class="toc-count">${counts[s.key] || 0} 場</span>
+      <span class="toc-page-no">p.${TOC_PAGES[i] || padNum(i+1)+"0"}</span>
+    </li>
+  `).join('');
+  $("#tocTotal").textContent = events.length;
+
+  // Reveal the intro overlay
+  document.body.classList.add('book-intro-active');
+  intro.classList.add('ready');
+
+  let opened = false;
+  const cover = $("#bookCover");
+  const LIFT_MS = 180;
+  const openBook = () => {
+    if (opened) return;
+    opened = true;
+    // 1) Brief lift on the closed-book panel — anticipation
+    cover.classList.add('lifting');
+    // 2) Trigger StPageFlip to do a REAL flip from the title spread
+    //    (pages 0-1) to the TOC spread (pages 2-3). The library owns
+    //    the corner-curl physics, so the user sees the same animation
+    //    as every other page turn in the book.
+    setTimeout(() => {
+      document.body.classList.add('intro-flipping');
+      if (document.body.classList.contains('paged-mode')) {
+        PagedBook.next();   // flipNext() with native corner-curl
+      }
+    }, LIFT_MS);
+    // 3) Fade the overlay out as the real flip plays out. The paged
+    //    book underneath is already mid-animation, so the user sees
+    //    a continuous closed→opening→TOC sequence.
+    setTimeout(() => close(null, /*silent*/true), LIFT_MS + 60);
+  };
+
+  // Mouse-driven parallax tilt on the stage — invitation to interact
+  const stage = intro.querySelector('.book-stage');
+  intro.addEventListener('pointermove', (e) => {
+    if (opened) return;
+    const r = intro.getBoundingClientRect();
+    const mx = ((e.clientX - r.left) / r.width - 0.5) * 2;   // -1 .. 1
+    const my = ((e.clientY - r.top) / r.height - 0.5) * 2;
+    stage.style.setProperty('--mx', mx.toFixed(3));
+    stage.style.setProperty('--my', my.toFixed(3));
+  });
+  intro.addEventListener('pointerleave', () => {
+    stage.style.setProperty('--mx', '0');
+    stage.style.setProperty('--my', '0');
+  });
+
+  const close = (targetKey, silent) => {
+    intro.classList.add('closing');
+    // silent = called as part of the open-book sequence; the underlying
+    // StPageFlip flip is already animating, so the overlay fade is short
+    // and just gets out of the way (the flip itself is what the user
+    // watches). Manual dismissals (skip/escape/TOC row) use a slower
+    // fade since there's no flip to mask.
+    const fadeMs = silent ? 90 : 720;
+    setTimeout(() => {
+      intro.style.display = 'none';
+      document.body.classList.remove('book-intro-active');
+      document.body.classList.remove('intro-flipping');
+      if (document.body.classList.contains('paged-mode')) {
+        if (targetKey) {
+          const plan = (window.__chapterPlans || []).find(p => p.sec.key === targetKey);
+          PagedBook.goTo(plan ? plan.openerPage : 2);
+        } else if (!silent) {
+          // Skip/escape with no open-book animation: jump to TOC directly
+          PagedBook.goTo(2);
+        }
+      } else if (targetKey) {
+        const target = document.querySelector(`.ed-section-${targetKey}`);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, fadeMs);
+  };
+
+  // Cover click → flip; click again on the open spread does nothing
+  $("#bookCover").addEventListener('click', openBook);
+
+  // Auto-open after 6 s if user hasn't clicked (gives time to read the cover)
+  const autoOpenTimer = setTimeout(openBook, 6000);
+
+  // TOC row → close + jump
+  list.addEventListener('click', (e) => {
+    const row = e.target.closest('.toc-row');
+    if (!row) return;
+    clearTimeout(autoOpenTimer);
+    close(row.dataset.key);
+  });
+  list.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const row = e.target.closest('.toc-row');
+      if (row) { e.preventDefault(); clearTimeout(autoOpenTimer); close(row.dataset.key); }
+    }
+  });
+
+  // "进入正篇" / Skip / Escape → close without jumping
+  const dismiss = () => { clearTimeout(autoOpenTimer); close(null); };
+  $("#bookIntroSkip").addEventListener('click', dismiss);
+  $("#bookIntroEnter").addEventListener('click', dismiss);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !intro.classList.contains('closing')
+        && intro.style.display !== 'none') {
+      dismiss();
+    }
+  });
 }
 
 init();
