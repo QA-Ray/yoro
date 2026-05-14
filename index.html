@@ -1340,7 +1340,10 @@
   }
 
   /* ============== Modal ============== */
-  .modal-backdrop {
+  /* Note: when #modal lives inside .book-volume the `.book-volume > *`
+     rule (position:relative; z-index:1) wins by specificity and breaks
+     the overlay. We use a more specific selector to keep modal fixed. */
+  .modal-backdrop, .book-volume > .modal-backdrop {
     position: fixed; inset: 0;
     background: rgba(43, 36, 24, 0.55);
     backdrop-filter: blur(4px);
