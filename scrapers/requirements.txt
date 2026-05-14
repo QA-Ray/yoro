@@ -1,1 +1,2 @@
 requests>=2.31
+scrapling[fetchers]>=0.2
