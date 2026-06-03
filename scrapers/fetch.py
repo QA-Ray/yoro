@@ -486,28 +486,71 @@ def fetch_connpass():
     return out
 
 
-# Walkerplus prefecture codes — pattern is ar{REGION}{JIS_PREF}
-# Limited to popular tourist destinations to keep run time reasonable.
-# To add more: see https://www.walkerplus.com/event_list/ar{XXYY}/
+# Walkerplus prefecture codes — pattern is ar{REGION}{JIS_PREF}.
+# Full 47-prefecture coverage. Names normalized to match the rest of the
+# dataset (no 都/府/県 suffix; 北海道 kept whole).
+# To verify codes: https://www.walkerplus.com/event_list/ar{XXYY}/
 WALKERPLUS_PREFS = [
     ("ar0101", "北海道"),
+    ("ar0202", "青森"),
+    ("ar0203", "岩手"),
+    ("ar0204", "宮城"),
+    ("ar0205", "秋田"),
+    ("ar0206", "山形"),
+    ("ar0207", "福島"),
+    ("ar0308", "茨城"),
+    ("ar0309", "栃木"),
+    ("ar0310", "群馬"),
+    ("ar0311", "埼玉"),
+    ("ar0312", "千葉"),
     ("ar0313", "東京"),
     ("ar0314", "神奈川"),
+    ("ar0415", "新潟"),
+    ("ar0516", "富山"),
+    ("ar0517", "石川"),
+    ("ar0518", "福井"),
+    ("ar0419", "山梨"),
+    ("ar0420", "長野"),
+    ("ar0621", "岐阜"),
     ("ar0622", "静岡"),
     ("ar0623", "愛知"),
+    ("ar0624", "三重"),
+    ("ar0725", "滋賀"),
     ("ar0726", "京都"),
     ("ar0727", "大阪"),
     ("ar0728", "兵庫"),
     ("ar0729", "奈良"),
+    ("ar0730", "和歌山"),
+    ("ar0831", "鳥取"),
+    ("ar0832", "島根"),
+    ("ar0833", "岡山"),
+    ("ar0834", "広島"),
+    ("ar0835", "山口"),
+    ("ar0936", "徳島"),
+    ("ar0937", "香川"),
+    ("ar0938", "愛媛"),
+    ("ar0939", "高知"),
     ("ar1040", "福岡"),
+    ("ar1041", "佐賀"),
+    ("ar1042", "長崎"),
+    ("ar1043", "熊本"),
+    ("ar1044", "大分"),
+    ("ar1045", "宮崎"),
+    ("ar1046", "鹿児島"),
+    ("ar1047", "沖縄"),
 ]
+
+# How many listing pages to fetch per prefecture (~10 events/page).
+WALKERPLUS_PAGES = 3
 
 
 def fetch_walkerplus():
     """Walkerplus event listings (HTML page + Schema.org JSON-LD).
 
     Robots.txt explicitly allows /event_list/. Polite: 1.5s delay between
-    prefecture pages. ~10 events per prefecture page.
+    requests. ~10 events per listing page; paginated up to WALKERPLUS_PAGES
+    pages per prefecture (page 2+ via /N.html), across all 47 prefectures.
+    Stops early when a page yields no events.
     """
     headers = {
         "User-Agent": UA,
@@ -517,37 +560,43 @@ def fetch_walkerplus():
 
     out = []
     for code, pref_name in WALKERPLUS_PREFS:
-        url = f"https://www.walkerplus.com/event_list/{code}/"
-        try:
-            r = requests.get(url, headers=headers, timeout=25)
-            r.raise_for_status()
-        except Exception as e:
-            print(f"  [walkerplus {pref_name}] {type(e).__name__}: {e}",
-                  file=sys.stderr)
-            time.sleep(1.5)
-            continue
-
-        blocks = re.findall(
-            r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
-            r.text, re.DOTALL,
-        )
-
-        added = 0
-        for block in blocks:
+        pref_added = 0
+        for page in range(1, WALKERPLUS_PAGES + 1):
+            base = f"https://www.walkerplus.com/event_list/{code}/"
+            url = base if page == 1 else f"{base}{page}.html"
             try:
-                data = json.loads(block)
-            except json.JSONDecodeError:
-                continue
-            items = data if isinstance(data, list) else [data]
-            for item in items:
-                if not isinstance(item, dict) or item.get("@type") != "Event":
+                r = requests.get(url, headers=headers, timeout=25)
+                r.raise_for_status()
+            except Exception as e:
+                print(f"  [walkerplus {pref_name} p{page}] "
+                      f"{type(e).__name__}: {e}", file=sys.stderr)
+                time.sleep(1.5)
+                break  # stop paginating this prefecture on error
+
+            blocks = re.findall(
+                r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
+                r.text, re.DOTALL,
+            )
+
+            page_added = 0
+            for block in blocks:
+                try:
+                    data = json.loads(block)
+                except json.JSONDecodeError:
                     continue
-                ev = parse_walkerplus_event(item, pref_name)
-                if ev:
-                    out.append(ev)
-                    added += 1
-        print(f"  [walkerplus {pref_name}] {added} events")
-        time.sleep(1.5)
+                items = data if isinstance(data, list) else [data]
+                for item in items:
+                    if not isinstance(item, dict) or item.get("@type") != "Event":
+                        continue
+                    ev = parse_walkerplus_event(item, pref_name)
+                    if ev:
+                        out.append(ev)
+                        page_added += 1
+            pref_added += page_added
+            time.sleep(1.5)
+            if page_added == 0:
+                break  # no more events for this prefecture
+        print(f"  [walkerplus {pref_name}] {pref_added} events")
 
     return out
 
