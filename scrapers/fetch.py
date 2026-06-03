@@ -665,15 +665,24 @@ WALKERPLUS_GENRES = [
     ("eg0108", "全国スポーツ",   "スポーツ", "競"),
     ("eg0109", "全国ライブ・音楽", "音楽",   "響"),
     ("eg0111", "全国舞台・演劇",  "音楽",   "舞"),
+    ("eg0102", "全国花火",       "祭り",   "火"),
+    ("eg0135", "全国祭り",       "祭り",   "祭"),
 ]
 
 
+# Genre feeds are national (not per-prefecture), so seasonal types like
+# 花火 / 祭り need more depth to surface July–August events that sit past
+# the nearer-dated listings. Paginate deeper than the per-prefecture feeds.
+WALKERPLUS_GENRE_PAGES = 5
+
+
 def fetch_walkerplus_genre():
-    """Walkerplus genre feeds — sports, live music, theater.
+    """Walkerplus genre feeds — sports, live music, theater, fireworks, festivals.
 
     Forces category based on the source genre URL (we trust Walkerplus's
     own classification more than keyword guessing for these specific types).
-    Yields ~10 events per genre, nationally curated.
+    Nationally curated; paginated up to WALKERPLUS_GENRE_PAGES per genre
+    (page 2+ via /N.html), stopping early when a page yields no new events.
     """
     headers = {
         "User-Agent": UA,
@@ -683,41 +692,47 @@ def fetch_walkerplus_genre():
 
     out = []
     for code, name, forced_cat, forced_kanji in WALKERPLUS_GENRES:
-        url = f"https://www.walkerplus.com/event_list/{code}/"
-        try:
-            r = requests.get(url, headers=headers, timeout=25)
-            r.raise_for_status()
-        except Exception as e:
-            print(f"  [walkerplus genre {name}] {type(e).__name__}: {e}",
-                  file=sys.stderr)
-            time.sleep(1.5)
-            continue
-
-        blocks = re.findall(
-            r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
-            r.text, re.DOTALL,
-        )
-        added = 0
-        for block in blocks:
+        genre_added = 0
+        for page in range(1, WALKERPLUS_GENRE_PAGES + 1):
+            base = f"https://www.walkerplus.com/event_list/{code}/"
+            url = base if page == 1 else f"{base}{page}.html"
             try:
-                data = json.loads(block)
-            except json.JSONDecodeError:
-                continue
-            items = data if isinstance(data, list) else [data]
-            for item in items:
-                if not isinstance(item, dict) or item.get("@type") != "Event":
+                r = requests.get(url, headers=headers, timeout=25)
+                r.raise_for_status()
+            except Exception as e:
+                print(f"  [walkerplus genre {name} p{page}] "
+                      f"{type(e).__name__}: {e}", file=sys.stderr)
+                time.sleep(1.5)
+                break
+
+            blocks = re.findall(
+                r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
+                r.text, re.DOTALL,
+            )
+            page_added = 0
+            for block in blocks:
+                try:
+                    data = json.loads(block)
+                except json.JSONDecodeError:
                     continue
-                ev = parse_walkerplus_event(item)  # auto-detect prefecture
-                if not ev:
-                    continue
-                # Override category — trust Walkerplus's genre classification
-                ev["category"] = forced_cat
-                ev["kanji"] = forced_kanji
-                ev["source"] = "walkerplus_genre"
-                out.append(ev)
-                added += 1
-        print(f"  [walkerplus genre {name}] {added} events")
-        time.sleep(1.5)
+                items = data if isinstance(data, list) else [data]
+                for item in items:
+                    if not isinstance(item, dict) or item.get("@type") != "Event":
+                        continue
+                    ev = parse_walkerplus_event(item)  # auto-detect prefecture
+                    if not ev:
+                        continue
+                    # Override category — trust Walkerplus's genre classification
+                    ev["category"] = forced_cat
+                    ev["kanji"] = forced_kanji
+                    ev["source"] = "walkerplus_genre"
+                    out.append(ev)
+                    page_added += 1
+            genre_added += page_added
+            time.sleep(1.5)
+            if page_added == 0:
+                break
+        print(f"  [walkerplus genre {name}] {genre_added} events")
 
     return out
 
