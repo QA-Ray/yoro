@@ -10272,7 +10272,7 @@
       "source": "walkerplus"
     },
     {
-      "id": "wp-fb145123b5",
+      "id": "wp-80c92b3877",
       "title_ja": "第15回北杜ふるさと祭り",
       "title_zh": "第15届北斗家乡节",
       "category": "祭り",
@@ -10284,7 +10284,7 @@
       "venue": "長坂総合スポーツ公園",
       "description_ja": "山梨県北杜市で開催される夏祭り。長坂総合スポーツ公園野球場を会場に、長坂町、高根町と北杜市商工会の共催で行われる。イベントは16時からスタートして、和太鼓の演奏、よさこいなどさまざまなパフォーマンスがにぎやかに披露される。まつりの最後を締めくくるのが、打ち上げ花火だ。スターマイン…",
       "description_zh": "这个夏季节日在山梨县北斗市举行。它由长阪镇、高根镇和北斗市工商会在长阪综合体育公园棒球场共同主办。活动于16:00开始，各种表演，如日本鼓和Yosakoi的表演都很热闹。节日结束时，烟花绽放，星辰……",
-      "url": "",
+      "url": "https://www.city.hokuto.yamanashi.jp/docs/34826.html",
       "image_url": "https://ms-cache.walkerplus.com/walkertouch/wtd/images/l/73913.jpg",
       "featured": false,
       "source": "walkerplus"
@@ -27876,7 +27876,7 @@
       "source": "walkerplus_genre"
     },
     {
-      "id": "wp-45c9a3b2f9",
+      "id": "wp-790c374621",
       "title_ja": "第32回 まほろば夏まつり「まほろば夢花火」",
       "title_zh": "第32届Mahoroba夏日节“Mahoroba梦幻烟花”",
       "category": "祭り",
@@ -27888,7 +27888,7 @@
       "venue": "大和町総合運動公園(陸上競技場)",
       "description_ja": "宮城県黒川郡大和町で開催される一大イベント「まほろば夏まつり」の最後を飾る花火大会。祭りの会場は大和町総合運動公園内で、12時から野外特設ステージや抽選会、キッズコーナーなど、老若男女が楽しめる多彩な催しや露店が多数出店される。花火は19時から打ち上げが始まり、夜空に鮮やかな大輪…",
       "description_zh": "在宫城县黑川郡大和町（ Yamato-machi, Kurokawa-gun, Miyagi Prefecture ）举行的盛大夏日焰火表演。节日在大和镇综合体育公园举行，从12点开始，有许多户外特色舞台、彩票、儿童角等活动和摊位，男女老少都可以享受。焰火从19:00开始，夜空中明亮的车轮……",
-      "url": "https://www.town.taiwa.miyagi.jp/index.html",
+      "url": "https://www.town.taiwa.miyagi.jp/soshiki/shokokanko/shokokanko/1210.html",
       "image_url": "https://ms-cache.walkerplus.com/walkertouch/wtd/images/l/74576.jpg",
       "featured": false,
       "source": "walkerplus_genre"
@@ -28776,24 +28776,6 @@
       "source": "kyoto"
     },
     {
-      "id": "kyo-55e71b4408",
-      "title_ja": "副産物産店の芸術資源循環センター展 〜終わりと始まりの穴〜【京都精華大学ギャラリーTerra-S】",
-      "title_zh": "副业产品商店的艺术资源回收中心展览-结束和开始的洞- [京都精华大学画廊Terra-S]",
-      "category": "展覧会",
-      "kanji": "展",
-      "date_start": "2026-07-24",
-      "date_end": "2026-08-02",
-      "prefecture": "京都",
-      "city": "",
-      "venue": "",
-      "description_ja": "",
-      "description_zh": "",
-      "url": "https://ja.kyoto.travel/event/single.php?event_id=14871",
-      "image_url": "https://ja.kyoto.travel/resource/event/14871-1.jpg",
-      "featured": false,
-      "source": "kyoto"
-    },
-    {
       "id": "kyo-988aaaa9bd",
       "title_ja": "坂田明×トリプルエッジ【磔磔】",
       "title_zh": "Akira Sakata x三重边缘钉十字架",
@@ -29042,6 +29024,24 @@
       "description_zh": "",
       "url": "https://ja.kyoto.travel/event/single.php?event_id=14757",
       "image_url": "https://ja.kyoto.travel/resource/event/14757-1.png",
+      "featured": false,
+      "source": "kyoto"
+    },
+    {
+      "id": "kyo-7171e95248",
+      "title_ja": "「二条城障壁画　展示収蔵館」原画公開　令和8年度夏期　「将軍、着座す ～〈大広間〉三の間～」",
+      "title_zh": "“二条城堡屏障画展览馆”原创画作Reiwa 8th Summer “幕府将军，坐着~ [大厅] Sannoma ~”",
+      "category": "展覧会",
+      "kanji": "展",
+      "date_start": "2026-06-13",
+      "date_end": "2026-08-11",
+      "prefecture": "京都",
+      "city": "",
+      "venue": "",
+      "description_ja": "",
+      "description_zh": "",
+      "url": "https://ja.kyoto.travel/event/single.php?event_id=3859",
+      "image_url": "https://ja.kyoto.travel/resource/event/3859-1.jpg",
       "featured": false,
       "source": "kyoto"
     },
@@ -34352,6 +34352,24 @@
       "description_zh": "",
       "url": "https://www.tokyoartbeat.com/events/Time-for-Love-and-Prayers-Lithuanian-Hand-Crafts/66-D9-E68-D/2027-01-16",
       "image_url": "https://images.ctfassets.net/j05yk38inose/1MpPXbVay2Dxzg1mzeODkD/f9ae06867c14f6d2667cb2b03b8f2ce9/main.jpg",
+      "featured": false,
+      "source": "tokyoartbeat"
+    },
+    {
+      "id": "tab-2fe4fe291b",
+      "title_ja": "「副産物産店の芸術資源循環センター展 〜終わりと始まりの穴〜」",
+      "title_zh": "“艺术资源回收中心在副产品商店的展览-结束和开始的洞”",
+      "category": "展覧会",
+      "kanji": "展",
+      "date_start": "2026-07-24",
+      "date_end": "2026-08-02",
+      "prefecture": "京都",
+      "city": "",
+      "venue": "京都精華大学ギャラリー Terra-S",
+      "description_ja": "",
+      "description_zh": "",
+      "url": "https://www.tokyoartbeat.com/events/Fukusambutsu-Sandten-Art-Resource-Circulation-Center-Exhibition-Hole-of-Endings-and-Beginnings/gallery-terra-s-at-kyoto-seika-university/2026-07-24",
+      "image_url": "https://images.ctfassets.net/j05yk38inose/64eO0BH2XNPM3thaFsRpxc/7b8f202ce0b84403ec04ea16cb177fd9/main.jpg",
       "featured": false,
       "source": "tokyoartbeat"
     },
